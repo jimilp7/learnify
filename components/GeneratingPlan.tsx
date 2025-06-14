@@ -1,6 +1,7 @@
 "use client"
 
-import { ArrowLeft, Loader2, Brain, Clock } from "lucide-react"
+import { useState, useEffect } from "react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 
 interface GeneratingPlanProps {
   topic: string
@@ -8,21 +9,50 @@ interface GeneratingPlanProps {
   onBack: () => void
 }
 
+const cheekyMessages = [
+  "Teaching AI to be your personal tutor",
+  "Brewing the perfect blend of knowledge", 
+  "Summoning the wisdom of the internet",
+  "Making learning fun (the audacity!)",
+  "Calculating the optimal brain expansion rate",
+  "Consulting with digital professors",
+  "Mixing curiosity with comprehension",
+  "Loading your personalized learning adventure",
+  "Optimizing for maximum 'aha!' moments",
+  "Crafting bite-sized genius pills"
+]
+
 export default function GeneratingPlan({ topic, depth, onBack }: GeneratingPlanProps) {
-  const getDepthInfo = (depth: string) => {
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
+  const [dotCount, setDotCount] = useState(0)
+  
+  const getDepthLabel = (depth: string) => {
     switch (depth) {
-      case 'simple':
-        return { label: 'Simple', emoji: '🌱', description: 'ELI5 level' }
-      case 'normal':
-        return { label: 'Normal', emoji: '🌿', description: 'High School level' }
-      case 'advanced':
-        return { label: 'Advanced', emoji: '🌳', description: 'PhD/Researcher level' }
-      default:
-        return { label: 'Normal', emoji: '🌿', description: 'High School level' }
+      case 'simple': return 'Simple (ELI5)'
+      case 'normal': return 'Normal (High School)'
+      case 'advanced': return 'Advanced (PhD/Researcher)'
+      default: return 'Normal (High School)'
     }
   }
   
-  const depthInfo = getDepthInfo(depth)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount(prev => {
+        if (prev === 3) {
+          // Reset dots and move to next message
+          setCurrentMessageIndex(prevIndex => 
+            (prevIndex + 1) % cheekyMessages.length
+          )
+          return 0
+        } else {
+          // Add another dot
+          return prev + 1
+        }
+      })
+    }, 1250) // Change every 1.25 seconds (5 seconds total per message)
+    
+    return () => clearInterval(interval)
+  }, [])
   
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -36,67 +66,35 @@ export default function GeneratingPlan({ topic, depth, onBack }: GeneratingPlanP
       </div>
       
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div className="text-center max-w-md mx-auto space-y-8">
-          {/* AI Brain Animation */}
-          <div className="relative">
-            <div className="w-20 h-20 mx-auto bg-blue-50 rounded-full flex items-center justify-center">
-              <Brain className="w-10 h-10 text-blue-500" />
+        <div className="max-w-md mx-auto space-y-8">
+          {/* Spinner */}
+          <div className="w-16 h-16 mx-auto">
+            <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />
+          </div>
+          
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-gray-900 text-center">
+            Generating Lesson Plan
+          </h1>
+          
+          {/* Topic and Depth - closer together and left aligned */}
+          <div className="space-y-2 text-left">
+            <div className="text-lg text-gray-700">
+              <span className="mr-2">📚</span>
+              <span className="font-medium">Topic:</span> {topic}
             </div>
-            <div className="absolute -top-1 -right-1">
-              <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+            
+            <div className="text-lg text-gray-600">
+              <span className="mr-2">🎯</span>
+              <span className="font-medium">Level:</span> {getDepthLabel(depth)}
             </div>
           </div>
           
-          {/* Main Content */}
-          <div className="space-y-4">
-            <h1 className="text-3xl font-bold text-gray-900">
-              🤖 Crafting Your Learning Journey
-            </h1>
-            
-            {/* Topic Card */}
-            <div className="bg-gray-50 rounded-2xl p-6 space-y-3">
-              <div className="flex items-center gap-2 text-gray-600">
-                <span className="text-xl">📚</span>
-                <span className="font-medium">Topic</span>
-              </div>
-              <p className="text-xl font-semibold text-gray-900 leading-relaxed">
-                {topic}
-              </p>
-            </div>
-            
-            {/* Depth Card */}
-            <div className="bg-green-50 rounded-2xl p-6 space-y-3">
-              <div className="flex items-center gap-2 text-gray-600">
-                <span className="text-xl">🎯</span>
-                <span className="font-medium">Learning Level</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{depthInfo.emoji}</span>
-                <div>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {depthInfo.label}
-                  </p>
-                  <p className="text-gray-600">
-                    {depthInfo.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Progress Indicator */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2 text-blue-600">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm font-medium">Usually takes 10-30 seconds</span>
-            </div>
-            
-            {/* Animated dots */}
-            <div className="flex justify-center gap-1">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
+          {/* Rotating Messages */}
+          <div className="h-6 flex items-center justify-center">
+            <p className="text-sm text-gray-500 italic transition-opacity duration-300 font-mono">
+              {cheekyMessages[currentMessageIndex]}{".".repeat(dotCount)}{" ".repeat(3 - dotCount)}
+            </p>
           </div>
         </div>
       </div>

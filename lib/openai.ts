@@ -24,16 +24,23 @@ export async function generateLessonPlan(topic: string, depth: string): Promise<
   
   console.log('📄 Using depth context:', depthContext[depth as keyof typeof depthContext])
 
-  const prompt = `Create a comprehensive learning plan for the topic: "${topic}"
+  const prompt = `Create a comprehensive audio learning plan for the topic: "${topic}"
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
 
-Generate exactly 10-15 lessons that build upon each other logically. Each lesson should be 3-5 minutes long.
+Generate exactly 10-15 lessons that build upon each other logically. Each lesson should be 3-5 minutes long and designed for audio consumption.
 
 For each lesson, provide:
-1. A clear, engaging title (max 4 words)
-2. A detailed description (2-3 sentences explaining what will be covered)
-3. Duration in minutes (3-5 minutes each)
+1. A clear, engaging title (max 4 words) that hints at the key insight
+2. A detailed description (2-3 sentences) explaining the specific learning outcome and why this lesson matters in the overall journey
+3. Duration in minutes (3-5 minutes each) - shorter for foundational concepts, longer for complex applications
+
+Design principles:
+- Start with concrete examples before abstract concepts
+- Each lesson should answer one clear question or solve one specific problem
+- Build curiosity for the next lesson (create natural progression hooks)
+- Use storytelling and analogies appropriate for audio learning
+- Ensure each lesson delivers a satisfying "aha moment" or practical insight
 
 Return the response as a JSON array with this exact structure:
 [
@@ -45,7 +52,7 @@ Return the response as a JSON array with this exact structure:
   }
 ]
 
-Make sure the lessons flow logically from basic concepts to more advanced applications. Focus on practical understanding and real-world applications.`
+The lesson sequence should feel like a guided journey from "I've never heard of this" to "I understand how to use this in my life/work."`
 
   console.log('📝 Generated prompt:')
   console.log(prompt)
