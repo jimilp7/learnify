@@ -128,3 +128,104 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
     throw new Error('Failed to generate lesson plan. Please try again.')
   }
 }
+
+export async function generateLessonContent(
+  topic: string, 
+  depth: string, 
+  lessonTitle: string, 
+  lessonDescription: string, 
+  duration: number
+): Promise<string> {
+  console.log('🤖 OpenAI generateLessonContent called with:')
+  console.log('  - Topic:', topic)
+  console.log('  - Depth:', depth)
+  console.log('  - Lesson:', lessonTitle)
+  console.log('  - Duration:', duration, 'minutes')
+  
+  const depthContext = {
+    simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
+    normal: "High school level - use clear explanations with some technical terms, practical examples",
+    advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
+  }
+  
+  const prompt = `Create a detailed script for an audio lesson on the topic: "${topic}"
+
+Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Lesson title: "${lessonTitle}"
+Lesson description: "${lessonDescription}"
+Target duration: ${duration} minutes (approximately ${duration * 150} words)
+
+Create engaging audio content that:
+- Opens with a hook or interesting question to grab attention
+- Explains concepts clearly using storytelling and analogies
+- Includes concrete examples and practical applications
+- Uses conversational tone perfect for audio consumption
+- Builds to a satisfying conclusion with key takeaways
+- Flows naturally when spoken aloud
+
+IMPORTANT: Return ONLY the spoken words that would be read aloud. Do NOT include:
+- Stage directions or production cues (like "Music fades in", "Sound effect", etc.)
+- Speaker labels or names
+- Action descriptions in brackets or parentheses
+- Any formatting or markdown
+- Narrator instructions
+
+Just write the exact words that should be spoken to the listener, as if you are directly teaching them through audio.`
+
+  console.log('📝 Generated content prompt:')
+  console.log(prompt)
+  console.log('\n🚀 Sending content request to OpenAI...')
+  
+  try {
+    const requestConfig = {
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert educational content creator specializing in audio learning. Create engaging, conversational content perfect for listening."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.8,
+      max_tokens: 3000
+    }
+    
+    console.log('⚙️ OpenAI content request config:', {
+      model: requestConfig.model,
+      temperature: requestConfig.temperature,
+      max_tokens: requestConfig.max_tokens,
+      messages_count: requestConfig.messages.length
+    })
+    
+    const completion = await openai.chat.completions.create(requestConfig)
+
+    console.log('✅ OpenAI content API call completed successfully')
+    console.log('📊 Usage stats:', {
+      prompt_tokens: completion.usage?.prompt_tokens,
+      completion_tokens: completion.usage?.completion_tokens,
+      total_tokens: completion.usage?.total_tokens
+    })
+    
+    const content = completion.choices[0]?.message?.content
+    console.log('💬 Raw OpenAI content response length:', content?.length || 0, 'characters')
+    
+    if (!content) {
+      console.error('❌ No content from OpenAI')
+      throw new Error('No content from OpenAI')
+    }
+
+    console.log('✅ Lesson content generation completed')
+    return content.trim()
+  } catch (error) {
+    console.error('💥 Error in generateLessonContent:')
+    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error)
+    console.error('Error message:', error instanceof Error ? error.message : String(error))
+    if (error instanceof Error && error.stack) {
+      console.error('Stack trace:', error.stack)
+    }
+    throw new Error('Failed to generate lesson content. Please try again.')
+  }
+}

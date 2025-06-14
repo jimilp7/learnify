@@ -5,8 +5,9 @@ import TopicSelection from "@/components/TopicSelection"
 import DepthSelection from "@/components/DepthSelection"
 import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
+import LessonContent from "@/components/LessonContent"
 
-type Screen = "topic" | "depth" | "generating" | "plan"
+type Screen = "topic" | "depth" | "generating" | "plan" | "player"
 
 interface Lesson {
   id: string
@@ -21,6 +22,7 @@ export default function Home() {
   const [depth, setDepth] = useState("")
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [error, setError] = useState("")
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
 
   const handleTopicNext = (selectedTopic: string) => {
     console.log('🎯 Topic selected:', selectedTopic)
@@ -74,12 +76,15 @@ export default function Home() {
   }
 
   const handleStart = () => {
-    // TODO: Navigate to learning screen
     console.log('🎬 Starting learning journey with:')
     console.log('  - Topic:', topic)
     console.log('  - Depth:', depth)
     console.log('  - Number of lessons:', lessons.length)
     console.log('  - Total duration:', lessons.reduce((sum, lesson) => sum + lesson.duration, 0), 'minutes')
+    
+    setCurrentLessonIndex(0)
+    setCurrentScreen("player")
+    console.log('📱 Screen changed to: player')
   }
 
   const handleBackToTopic = () => {
@@ -95,6 +100,11 @@ export default function Home() {
   const handleBackFromGenerating = () => {
     console.log('⬅️ Navigating back from generating screen to depth selection')
     setCurrentScreen("depth")
+  }
+  
+  const handleBackFromPlayer = () => {
+    console.log('⬅️ Navigating back from player to lesson plan')
+    setCurrentScreen("plan")
   }
 
   return (
@@ -124,6 +134,15 @@ export default function Home() {
           lessons={lessons}
           onStart={handleStart}
           onBack={handleBackToDepth}
+        />
+      )}
+      {currentScreen === "player" && (
+        <LessonContent 
+          lessons={lessons}
+          currentLessonIndex={currentLessonIndex}
+          topic={topic}
+          depth={depth}
+          onBack={handleBackFromPlayer}
         />
       )}
     </>
