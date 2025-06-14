@@ -11,8 +11,13 @@ export default function TopicSelection({ onNext }: TopicSelectionProps) {
   const [topic, setTopic] = useState("")
 
   const handleSubmit = () => {
-    if (topic.trim()) {
-      onNext(topic.trim())
+    const trimmedTopic = topic.trim()
+    console.log('📝 Topic submission attempt:', trimmedTopic)
+    if (trimmedTopic) {
+      console.log('✅ Valid topic, calling onNext')
+      onNext(trimmedTopic)
+    } else {
+      console.log('❌ Empty topic, submission blocked')
     }
   }
 

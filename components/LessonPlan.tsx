@@ -14,6 +14,7 @@ interface Lesson {
 interface LessonPlanProps {
   topic: string
   depth: string
+  lessons: Lesson[]
   onStart: () => void
   onBack: () => void
 }
@@ -82,8 +83,8 @@ const mockLessons: Lesson[] = [
   }
 ]
 
-export default function LessonPlan({ topic, depth, onStart, onBack }: LessonPlanProps) {
-  const totalDuration = mockLessons.reduce((sum, lesson) => sum + lesson.duration, 0)
+export default function LessonPlan({ topic, depth, lessons, onStart, onBack }: LessonPlanProps) {
+  const totalDuration = lessons.reduce((sum, lesson) => sum + lesson.duration, 0)
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set())
 
   const toggleLesson = (lessonId: string) => {
@@ -118,7 +119,7 @@ export default function LessonPlan({ topic, depth, onStart, onBack }: LessonPlan
       
       <div className="flex-1 overflow-y-auto px-6 pb-32">
         <div className="max-w-md mx-auto space-y-3">
-          {mockLessons.map((lesson, index) => {
+          {lessons.map((lesson, index) => {
             const isExpanded = expandedLessons.has(lesson.id)
             return (
               <button

@@ -8,6 +8,7 @@ interface DepthSelectionProps {
   topic: string
   onNext: (depth: string) => void
   onBack: () => void
+  error?: string
 }
 
 const depthOptions = [
@@ -37,10 +38,11 @@ const depthOptions = [
   }
 ]
 
-export default function DepthSelection({ topic, onNext, onBack }: DepthSelectionProps) {
+export default function DepthSelection({ topic, onNext, onBack, error }: DepthSelectionProps) {
   const [depth, setDepth] = useState("normal")
 
   const handleSubmit = () => {
+    console.log('🚀 Depth selection submitted:', depth)
     onNext(depth)
   }
 
@@ -63,6 +65,12 @@ export default function DepthSelection({ topic, onNext, onBack }: DepthSelection
               Learning: {topic}
             </p>
           </div>
+          
+          {error && (
+            <div className="p-4 rounded-2xl bg-red-50 border border-red-200">
+              <p className="text-red-600 text-center">{error}</p>
+            </div>
+          )}
           
           <div className="space-y-4">
             {depthOptions.map((option) => (
