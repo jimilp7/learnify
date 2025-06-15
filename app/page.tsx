@@ -6,8 +6,9 @@ import DepthSelection from "@/components/DepthSelection"
 import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
+import GeneratingContent from "@/components/GeneratingContent"
 
-type Screen = "topic" | "depth" | "generating" | "plan" | "player"
+type Screen = "topic" | "depth" | "generating" | "plan" | "generatingContent" | "player"
 
 interface Lesson {
   id: string
@@ -23,6 +24,8 @@ export default function Home() {
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [error, setError] = useState("")
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
+  const [lessonContent, setLessonContent] = useState<string>("")
+  const [lessonContents, setLessonContents] = useState<Record<number, string>>({})
 
   const handleTopicNext = (selectedTopic: string) => {
     console.log('🎯 Topic selected:', selectedTopic)
@@ -75,16 +78,62 @@ export default function Home() {
     }
   }
 
-  const handleStart = () => {
+  const handleStart = async () => {
     console.log('🎬 Starting learning journey with:')
     console.log('  - Topic:', topic)
     console.log('  - Depth:', depth)
-    console.log('  - Number of lessons:', lessons.length)
-    console.log('  - Total duration:', lessons.reduce((sum, lesson) => sum + lesson.duration, 0), 'minutes')
+    console.log('  - Current lesson:', lessons[0].title)
     
     setCurrentLessonIndex(0)
-    setCurrentScreen("player")
-    console.log('📱 Screen changed to: player')
+    await generateLessonContent(0)
+  }
+  
+  const generateLessonContent = async (lessonIndex: number) => {
+    // Check if we already have content for this lesson
+    if (lessonContents[lessonIndex]) {
+      console.log('📦 Using cached content for lesson', lessonIndex)
+      setLessonContent(lessonContents[lessonIndex])
+      setCurrentScreen("player")
+      return
+    }
+    
+    setCurrentScreen("generatingContent")
+    console.log('📱 Screen changed to: generatingContent')
+    
+    try {
+      const response = await fetch("/api/generate-content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic,
+          depth,
+          lessonTitle: lessons[lessonIndex].title,
+          lessonDescription: lessons[lessonIndex].description,
+          duration: lessons[lessonIndex].duration
+        }),
+      })
+      
+      console.log('📡 Content API response status:', response.status)
+      
+      if (!response.ok) {
+        throw new Error("Failed to generate lesson content")
+      }
+      
+      const data = await response.json()
+      console.log('✅ Received lesson content for lesson', lessonIndex)
+      
+      // Cache the content
+      setLessonContents(prev => ({ ...prev, [lessonIndex]: data.content }))
+      setLessonContent(data.content)
+      setCurrentScreen("player")
+      console.log('📱 Screen changed to: player')
+    } catch (err) {
+      console.error('💥 Error generating lesson content:', err)
+      setError("Failed to generate lesson content. Please try again.")
+      setCurrentScreen("plan")
+    }
   }
 
   const handleBackToTopic = () => {
@@ -105,6 +154,50 @@ export default function Home() {
   const handleBackFromPlayer = () => {
     console.log('⬅️ Navigating back from player to lesson plan')
     setCurrentScreen("plan")
+  }
+  
+  const handleBackFromGeneratingContent = () => {
+    console.log('⬅️ Navigating back from generating content to lesson plan')
+    setCurrentScreen("plan")
+  }
+  
+  const handleNextLesson = async () => {
+    const nextIndex = currentLessonIndex + 1
+    if (nextIndex < lessons.length) {
+      console.log('⏭️ Moving to next lesson:', nextIndex)
+      setCurrentLessonIndex(nextIndex)
+      await generateLessonContent(nextIndex)
+    }
+  }
+  
+  const handlePreviousLesson = async () => {
+    const prevIndex = currentLessonIndex - 1
+    if (prevIndex >= 0) {
+      console.log('⏮️ Moving to previous lesson:', prevIndex)
+      setCurrentLessonIndex(prevIndex)
+      await generateLessonContent(prevIndex)
+    }
+  }
+  
+  const handleSelectLesson = async (lessonIndex: number) => {
+    if (lessonIndex !== currentLessonIndex && lessonIndex >= 0 && lessonIndex < lessons.length) {
+      console.log('🎨 Jumping to lesson:', lessonIndex)
+      setCurrentLessonIndex(lessonIndex)
+      await generateLessonContent(lessonIndex)
+    }
+  }
+  
+  const handleStartOver = () => {
+    console.log('🔁 Starting over - resetting everything')
+    // Reset all state
+    setCurrentScreen("topic")
+    setTopic("")
+    setDepth("")
+    setLessons([])
+    setLessonContent("")
+    setLessonContents({})
+    setCurrentLessonIndex(0)
+    setError("")
   }
 
   return (
@@ -136,13 +229,22 @@ export default function Home() {
           onBack={handleBackToDepth}
         />
       )}
+      {currentScreen === "generatingContent" && (
+        <GeneratingContent
+          lessonTitle={lessons[currentLessonIndex]?.title || ""}
+          onBack={handleBackFromGeneratingContent}
+        />
+      )}
       {currentScreen === "player" && (
         <LessonContent 
           lessons={lessons}
           currentLessonIndex={currentLessonIndex}
-          topic={topic}
-          depth={depth}
+          lessonContent={lessonContent}
           onBack={handleBackFromPlayer}
+          onNext={handleNextLesson}
+          onPrevious={handlePreviousLesson}
+          onSelectLesson={handleSelectLesson}
+          onStartOver={handleStartOver}
         />
       )}
     </>

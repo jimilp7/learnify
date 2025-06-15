@@ -77,8 +77,8 @@ export default function GeneratingPlan({ topic, depth, onBack }: GeneratingPlanP
             Generating Lesson Plan
           </h1>
           
-          {/* Topic and Depth - closer together and left aligned */}
-          <div className="space-y-2 text-left">
+          {/* Topic and Depth - centered */}
+          <div className="space-y-2 text-center">
             <div className="text-lg text-gray-700">
               <span className="mr-2">📚</span>
               <span className="font-medium">Topic:</span> {topic}
@@ -92,7 +92,7 @@ export default function GeneratingPlan({ topic, depth, onBack }: GeneratingPlanP
           
           {/* Rotating Messages */}
           <div className="h-6 flex items-center justify-center">
-            <p className="text-sm text-gray-500 italic transition-opacity duration-300 font-mono">
+            <p className="text-sm text-gray-500 italic transition-opacity duration-300">
               {cheekyMessages[currentMessageIndex]}{".".repeat(dotCount)}{" ".repeat(3 - dotCount)}
             </p>
           </div>

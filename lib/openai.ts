@@ -72,13 +72,11 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
           content: prompt
         }
       ],
-      temperature: 0.7,
       max_completion_tokens: 2000
     }
     
     console.log('⚙️ OpenAI request config:', {
       model: requestConfig.model,
-      temperature: requestConfig.temperature,
       max_completion_tokens: requestConfig.max_completion_tokens,
       messages_count: requestConfig.messages.length
     })
@@ -164,6 +162,12 @@ Create engaging audio content that:
 - Builds to a satisfying conclusion with key takeaways
 - Flows naturally when spoken aloud
 
+CRITICAL FORMATTING REQUIREMENTS:
+- Keep each paragraph SHORT - only 2-3 sentences max
+- Each paragraph should take 10-15 seconds to read aloud (approximately 25-40 words)
+- Use line breaks to separate paragraphs
+- This allows for smooth audio generation and playback
+
 IMPORTANT: Return ONLY the spoken words that would be read aloud. Do NOT include:
 - Stage directions or production cues (like "Music fades in", "Sound effect", etc.)
 - Speaker labels or names
@@ -190,13 +194,11 @@ Just write the exact words that should be spoken to the listener, as if you are 
           content: prompt
         }
       ],
-      temperature: 0.8,
       max_completion_tokens: 3000
     }
     
     console.log('⚙️ OpenAI content request config:', {
       model: requestConfig.model,
-      temperature: requestConfig.temperature,
       max_completion_tokens: requestConfig.max_completion_tokens,
       messages_count: requestConfig.messages.length
     })

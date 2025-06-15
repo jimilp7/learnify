@@ -1,20 +1,20 @@
 "use client"
 
-import { useState } from "react"
-import { Play, Pause, SkipBack, SkipForward } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, ListMusic } from "lucide-react"
 
 interface AudioPlayerProps {
   isPlaying: boolean
   onPlayPause: () => void
   onPrevious: () => void
   onNext: () => void
-  currentTime: number
-  duration: number
-  onSeek: (time: number) => void
+  onStartOver: () => void
   canGoPrev: boolean
   canGoNext: boolean
   hasAudio: boolean
-  isGeneratingAudio?: boolean
+  lessons?: Array<{ id: string; title: string }>
+  currentLessonIndex?: number
+  onSelectLesson?: (index: number) => void
 }
 
 export default function AudioPlayer({
@@ -22,72 +22,47 @@ export default function AudioPlayer({
   onPlayPause,
   onPrevious,
   onNext,
-  currentTime,
-  duration,
-  onSeek,
+  onStartOver,
   canGoPrev,
   canGoNext,
   hasAudio,
-  isGeneratingAudio = false
+  lessons,
+  currentLessonIndex = 0,
+  onSelectLesson
 }: AudioPlayerProps) {
-  const [isDragging, setIsDragging] = useState(false)
+  const [showPlaylist, setShowPlaylist] = useState(false)
+  const playlistRef = useRef<HTMLDivElement>(null)
   
-  const formatTime = (seconds: number) => {
-    if (!hasAudio) return "-:--"
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-  
-  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value)
-    onSeek(newTime)
-  }
-  
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Close playlist when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (playlistRef.current && !playlistRef.current.contains(event.target as Node)) {
+        setShowPlaylist(false)
+      }
+    }
+    
+    if (showPlaylist) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPlaylist])
   
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-      <div className="max-w-md mx-auto space-y-3">
-        {/* Seek Bar */}
-        <div className="space-y-1">
-          <div className="relative">
-            <input
-              type="range"
-              min="0"
-              max={duration}
-              value={currentTime}
-              onChange={handleSeekChange}
-              onMouseDown={() => setIsDragging(true)}
-              onMouseUp={() => setIsDragging(false)}
-              disabled={!hasAudio}
-              className={`w-full h-1 bg-gray-200 rounded-lg appearance-none slider ${
-                hasAudio ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
-              }`}
-              style={{
-                background: hasAudio 
-                  ? `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${progress}%, #e5e7eb ${progress}%, #e5e7eb 100%)`
-                  : '#e5e7eb'
-              }}
-            />
-          </div>
-          
-          {/* Time Display */}
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>{formatTime(currentTime)}</span>
-            <span>-:--</span>
-          </div>
-        </div>
-        
-        {/* Generating Audio Status */}
-        {isGeneratingAudio && (
-          <div className="flex items-center justify-center py-2">
-            <span className="text-xs text-gray-500">Generating audio...</span>
-          </div>
-        )}
-        
+      <div className="max-w-md mx-auto">
         {/* Controls */}
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-4">
+          {/* Start Over */}
+          <button
+            onClick={onStartOver}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            title="Start Over"
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
           <button
             onClick={onPrevious}
             disabled={!canGoPrev}
@@ -119,6 +94,47 @@ export default function AudioPlayer({
           >
             <SkipForward className="w-6 h-6" />
           </button>
+          
+          {/* Playlist */}
+          <div className="relative" ref={playlistRef}>
+            <button
+              onClick={() => setShowPlaylist(!showPlaylist)}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              title="Playlist"
+            >
+              <ListMusic className="w-5 h-5" />
+            </button>
+            
+            {/* Playlist Dropdown */}
+            {showPlaylist && lessons && (
+              <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto">
+                <div className="p-2">
+                  <h3 className="text-sm font-semibold text-gray-700 px-3 py-2">Lessons</h3>
+                  {lessons.map((lesson, index) => (
+                    <button
+                      key={lesson.id}
+                      onClick={() => {
+                        if (onSelectLesson) {
+                          onSelectLesson(index)
+                          setShowPlaylist(false)
+                        }
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 transition-colors text-sm ${
+                        index === currentLessonIndex
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">{index + 1}.</span>
+                        <span className="truncate">{lesson.title}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
