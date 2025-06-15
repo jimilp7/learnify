@@ -61,7 +61,7 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
   
   try {
     const requestConfig = {
-      model: "gpt-4",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
@@ -179,7 +179,7 @@ Just write the exact words that should be spoken to the listener, as if you are 
   
   try {
     const requestConfig = {
-      model: "gpt-4",
+      model: "o3-mini",
       messages: [
         {
           role: "system",

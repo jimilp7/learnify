@@ -267,27 +267,19 @@ export default function LessonContent({
       </div>
       
       {/* Audio Player */}
-      {isGeneratingAudio ? (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-          <div className="max-w-md mx-auto flex items-center justify-center space-x-3">
-            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-            <span className="text-gray-600">Generating audio...</span>
-          </div>
-        </div>
-      ) : (
-        <AudioPlayer
-          isPlaying={isPlaying}
-          onPlayPause={handlePlayPause}
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-          currentTime={currentTime}
-          duration={audioElement?.duration || 0}
-          onSeek={handleSeek}
-          canGoPrev={currentLessonIndex > 0}
-          canGoNext={currentLessonIndex < lessons.length - 1}
-          hasAudio={!!audioElement}
-        />
-      )}
+      <AudioPlayer
+        isPlaying={isPlaying}
+        onPlayPause={handlePlayPause}
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+        currentTime={currentTime}
+        duration={audioElement?.duration || 0}
+        onSeek={handleSeek}
+        canGoPrev={currentLessonIndex > 0}
+        canGoNext={currentLessonIndex < lessons.length - 1}
+        hasAudio={!!audioElement}
+        isGeneratingAudio={isGeneratingAudio}
+      />
     </div>
   )
 }

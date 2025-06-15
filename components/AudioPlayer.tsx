@@ -14,6 +14,7 @@ interface AudioPlayerProps {
   canGoPrev: boolean
   canGoNext: boolean
   hasAudio: boolean
+  isGeneratingAudio?: boolean
 }
 
 export default function AudioPlayer({
@@ -26,7 +27,8 @@ export default function AudioPlayer({
   onSeek,
   canGoPrev,
   canGoNext,
-  hasAudio
+  hasAudio,
+  isGeneratingAudio = false
 }: AudioPlayerProps) {
   const [isDragging, setIsDragging] = useState(false)
   
@@ -73,9 +75,16 @@ export default function AudioPlayer({
           {/* Time Display */}
           <div className="flex justify-between text-xs text-gray-500">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>-:--</span>
           </div>
         </div>
+        
+        {/* Generating Audio Status */}
+        {isGeneratingAudio && (
+          <div className="flex items-center justify-center py-2">
+            <span className="text-xs text-gray-500">Generating audio...</span>
+          </div>
+        )}
         
         {/* Controls */}
         <div className="flex items-center justify-center gap-6">
