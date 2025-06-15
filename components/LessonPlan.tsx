@@ -19,71 +19,8 @@ interface LessonPlanProps {
   onBack: () => void
 }
 
-// Mock data for lessons with descriptions
-const mockLessons: Lesson[] = [
-  { 
-    id: "1", 
-    title: "Introduction", 
-    description: "We'll start with a gentle introduction to the topic, setting the foundation for everything that follows. This lesson covers the basic terminology, key concepts, and why this topic matters in today's world.",
-    duration: 3 
-  },
-  { 
-    id: "2", 
-    title: "Core Concepts", 
-    description: "Dive deep into the fundamental principles that govern this subject. We'll explore the essential theories, models, and frameworks that experts use to understand and work with these ideas.",
-    duration: 5 
-  },
-  { 
-    id: "3", 
-    title: "Real Examples", 
-    description: "See how these concepts apply in real-world scenarios through practical examples and case studies. You'll understand how professionals use this knowledge to solve actual problems.",
-    duration: 4 
-  },
-  { 
-    id: "4", 
-    title: "Common Mistakes", 
-    description: "Learn about the most frequent errors people make when learning this topic and how to avoid them. We'll clarify common misconceptions and provide clear guidance on the right approach.",
-    duration: 3 
-  },
-  { 
-    id: "5", 
-    title: "Advanced Tips", 
-    description: "Take your understanding to the next level with sophisticated techniques and expert strategies. This lesson covers nuanced approaches that separate beginners from advanced practitioners.",
-    duration: 5 
-  },
-  { 
-    id: "6", 
-    title: "History & Context", 
-    description: "Understand how this field evolved over time and the key figures who shaped it. We'll explore the historical context that led to current practices and future directions.",
-    duration: 4 
-  },
-  { 
-    id: "7", 
-    title: "Future Trends", 
-    description: "Look ahead to emerging developments and where this field is heading. We'll discuss cutting-edge research, upcoming technologies, and how to stay current with rapid changes.",
-    duration: 3 
-  },
-  { 
-    id: "8", 
-    title: "Practice Time", 
-    description: "Apply what you've learned through interactive exercises and thought experiments. This hands-on session helps reinforce your understanding and build practical skills.",
-    duration: 5 
-  },
-  { 
-    id: "9", 
-    title: "Expert Insights", 
-    description: "Gain wisdom from leading professionals in the field through curated insights and best practices. Learn the tips and tricks that only come from years of experience.",
-    duration: 4 
-  },
-  { 
-    id: "10", 
-    title: "Summary", 
-    description: "Review the key takeaways from your learning journey and get guidance on next steps. We'll consolidate your knowledge and provide resources for continued learning.",
-    duration: 3 
-  }
-]
 
-export default function LessonPlan({ topic, depth, lessons, onStart, onBack }: LessonPlanProps) {
+export default function LessonPlan({ topic, lessons, onStart, onBack }: LessonPlanProps) {
   const totalDuration = lessons.reduce((sum, lesson) => sum + lesson.duration, 0)
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set())
 

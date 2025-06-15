@@ -45,7 +45,7 @@ export class ResembleTTS {
       ignoreWavHeader?: boolean;
     };
   }): AsyncGenerator<StreamingChunk, void, unknown> {
-    let startTime = performance.now();
+    const startTime = performance.now();
     let isFirstChunk = true;
 
     try {

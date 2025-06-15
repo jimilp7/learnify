@@ -9,7 +9,7 @@ export class TTSTestUtils {
   private tts: ResembleTTS;
   private outputDir: string;
 
-  constructor(apiKey?: string) {
+  constructor() {
     const apiKey_ = process.env.RESEMBLE_AI_API_KEY;
     const endpoint = process.env.RESEMBLE_STREAM_ENDPOINT || 'https://p.cluster.resemble.ai/stream';
     this.tts = new ResembleTTS(apiKey_, endpoint);

@@ -81,7 +81,8 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
       messages_count: requestConfig.messages.length
     })
     
-    const completion = await openai.chat.completions.create(requestConfig)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const completion = await openai.chat.completions.create(requestConfig as any)
 
     console.log('✅ OpenAI API call completed successfully')
     console.log('📊 Usage stats:', {
@@ -203,7 +204,8 @@ Just write the exact words that should be spoken to the listener, as if you are 
       messages_count: requestConfig.messages.length
     })
     
-    const completion = await openai.chat.completions.create(requestConfig)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const completion = await openai.chat.completions.create(requestConfig as any)
 
     console.log('✅ OpenAI content API call completed successfully')
     console.log('📊 Usage stats:', {

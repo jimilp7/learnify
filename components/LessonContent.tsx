@@ -36,7 +36,7 @@ export default function LessonContent({
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(true)
   const [audioUrls, setAudioUrls] = useState<string[]>([])
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0)
-  const [audioElements, setAudioElements] = useState<HTMLAudioElement[]>([])
+  const [, setAudioElements] = useState<HTMLAudioElement[]>([])
   const [currentAudioElement, setCurrentAudioElement] = useState<HTMLAudioElement | null>(null)
   const [paragraphs, setParagraphs] = useState<string[]>([])
   const [generatedParagraphCount, setGeneratedParagraphCount] = useState(0)
@@ -107,7 +107,22 @@ export default function LessonContent({
     
     const newAudioUrls: string[] = []
     const newAudioElements: HTMLAudioElement[] = []
-    let firstAudioPlayed = false
+    let currentPlayingIndex = 0
+    
+    const playNextSegment = () => {
+      currentPlayingIndex++
+      if (currentPlayingIndex < newAudioElements.length) {
+        console.log(`🎵 Playing audio segment ${currentPlayingIndex + 1}/${newAudioElements.length}`)
+        setCurrentAudioIndex(currentPlayingIndex)
+        setCurrentAudioElement(newAudioElements[currentPlayingIndex])
+        newAudioElements[currentPlayingIndex].play().catch(err => {
+          console.error('⚠️ Failed to play next audio:', err)
+        })
+      } else {
+        console.log('🎵 All audio segments completed')
+        setIsPlaying(false)
+      }
+    }
     
     try {
       for (let i = 0; i < paragraphs.length; i++) {
@@ -144,7 +159,7 @@ export default function LessonContent({
         // Set up event listeners
         audio.addEventListener('ended', () => {
           console.log(`🎵 Audio segment ${i + 1} ended`)
-          playNextAudio()
+          playNextSegment()
         })
         
         audio.addEventListener('play', () => {
@@ -163,8 +178,7 @@ export default function LessonContent({
         // For the first audio, set it as current
         if (i === 0) {
           setCurrentAudioElement(audio)
-          setAudioElements([audio])
-          setAudioUrls([audioUrl])
+          setCurrentAudioIndex(0) // Ensure first paragraph is highlighted
           
           audio.addEventListener('loadedmetadata', () => {
             console.log('🎵 First audio loaded, duration:', audio.duration, 'seconds')
@@ -174,12 +188,12 @@ export default function LessonContent({
           if (paragraphs.length > 1) {
             setIsGeneratingAudio(false) // Hide generating status after first audio
           }
-        } else {
-          // Update the arrays with new elements
-          setAudioUrls(prev => [...prev, audioUrl])
-          setAudioElements(prev => [...prev, audio])
         }
       }
+      
+      // Update state with all generated audio
+      setAudioUrls(newAudioUrls)
+      setAudioElements(newAudioElements)
       
       console.log('✅ All paragraph audio generated successfully')
       setIsGeneratingAudio(false)
@@ -190,28 +204,6 @@ export default function LessonContent({
     }
   }, [])
   
-  const playNextAudio = () => {
-    setCurrentAudioIndex(prevIndex => {
-      const nextIndex = prevIndex + 1
-      
-      setAudioElements(elements => {
-        if (nextIndex < elements.length) {
-          console.log(`🎵 Playing audio segment ${nextIndex + 1}/${elements.length}`)
-          setCurrentAudioElement(elements[nextIndex])
-          elements[nextIndex].play().catch(err => {
-            console.error('⚠️ Failed to play next audio:', err)
-          })
-          return elements
-        } else {
-          console.log('🎵 All audio segments completed')
-          setIsPlaying(false)
-          return elements
-        }
-      })
-      
-      return nextIndex < audioElements.length ? nextIndex : 0
-    })
-  }
   
   useEffect(() => {
     if (currentLesson && lessonContent) {
