@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
 import { ResembleTTS, AudioPrecision } from '@/app/api/backend/tts';
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Types for request body
 interface GenerateAudioRequest {

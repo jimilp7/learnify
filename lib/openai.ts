@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { MIN_LESSONS, MAX_LESSONS, MIN_LESSON_LENGTH, MAX_LESSON_LENGTH } from './constants'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -28,12 +29,12 @@ export async function generateLessonPlan(topic: string, depth: string): Promise<
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
 
-Generate exactly 10-15 lessons that build upon each other logically. Each lesson should be 3-5 minutes long and designed for audio consumption.
+Generate exactly ${MIN_LESSONS}-${MAX_LESSONS} lessons that build upon each other logically. Each lesson should be ${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes long and designed for audio consumption.
 
 For each lesson, provide:
 1. A clear, engaging title (max 4 words) that hints at the key insight
 2. A detailed description (2-3 sentences) explaining the specific learning outcome and why this lesson matters in the overall journey
-3. Duration in minutes (3-5 minutes each) - shorter for foundational concepts, longer for complex applications
+3. Duration in minutes (${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes each) - shorter for foundational concepts, longer for complex applications
 
 Design principles:
 - Start with concrete examples before abstract concepts
