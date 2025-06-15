@@ -2,6 +2,8 @@
 
 **"Spotify for Learning"** - An endless stream of short, high-quality AI-generated audio tutorials tailored to your interests and understanding level.
 
+![Learnify Screenshot](https://i.imgur.com/fPYXJSq.png)
+
 🎧 **Live Demo**: [https://learnify.swiftace.org](https://learnify.swiftace.org)
 
 ## Overview
