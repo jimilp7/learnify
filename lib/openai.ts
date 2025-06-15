@@ -73,13 +73,13 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
         }
       ],
       temperature: 0.7,
-      max_tokens: 2000
+      max_completion_tokens: 2000
     }
     
     console.log('⚙️ OpenAI request config:', {
       model: requestConfig.model,
       temperature: requestConfig.temperature,
-      max_tokens: requestConfig.max_tokens,
+      max_completion_tokens: requestConfig.max_completion_tokens,
       messages_count: requestConfig.messages.length
     })
     
@@ -191,13 +191,13 @@ Just write the exact words that should be spoken to the listener, as if you are 
         }
       ],
       temperature: 0.8,
-      max_tokens: 3000
+      max_completion_tokens: 3000
     }
     
     console.log('⚙️ OpenAI content request config:', {
       model: requestConfig.model,
       temperature: requestConfig.temperature,
-      max_tokens: requestConfig.max_tokens,
+      max_completion_tokens: requestConfig.max_completion_tokens,
       messages_count: requestConfig.messages.length
     })
     
