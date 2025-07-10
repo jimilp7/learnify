@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+import logger from "@/lib/logger"
 
 interface DepthSelectionProps {
   topic: string
@@ -42,7 +43,7 @@ export default function DepthSelection({ topic, onNext, onBack, error }: DepthSe
   const [depth, setDepth] = useState("normal")
 
   const handleSubmit = () => {
-    console.log('🚀 Depth selection submitted:', depth)
+    logger.info('🚀 Depth selection submitted:', { depth })
     onNext(depth)
   }
 

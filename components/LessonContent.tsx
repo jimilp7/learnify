@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { ArrowLeft } from "lucide-react"
 import AudioPlayer from "./AudioPlayer"
+import logger from "@/lib/logger"
 
 interface Lesson {
   id: string
@@ -46,7 +47,7 @@ export default function LessonContent({
   const handlePlayPause = () => {
     if (!currentAudioElement) return
     
-    console.log('🎵 Play/Pause toggled:', !isPlaying)
+    logger.info('🎵 Play/Pause toggled:', { isPlaying: !isPlaying })
     
     if (isPlaying) {
       currentAudioElement.pause()
@@ -57,7 +58,7 @@ export default function LessonContent({
   }
   
   const handleStartOver = () => {
-    console.log('🔁 Starting over - going back to topic selection')
+    logger.info('🔁 Starting over - going back to topic selection')
     // Stop current audio
     if (currentAudioElement) {
       currentAudioElement.pause()
@@ -71,7 +72,7 @@ export default function LessonContent({
   
   const handlePrevious = () => {
     if (currentLessonIndex > 0) {
-      console.log('⏮️ Previous lesson:', currentLessonIndex - 1)
+      logger.info('⏮️ Previous lesson:', { prevLessonIndex: currentLessonIndex - 1 })
       // Stop current audio
       if (currentAudioElement) {
         currentAudioElement.pause()
@@ -86,7 +87,7 @@ export default function LessonContent({
   
   const handleNext = () => {
     if (currentLessonIndex < lessons.length - 1) {
-      console.log('⏭️ Next lesson:', currentLessonIndex + 1)
+      logger.info('⏭️ Next lesson:', { nextLessonIndex: currentLessonIndex + 1 })
       // Stop current audio
       if (currentAudioElement) {
         currentAudioElement.pause()
@@ -102,7 +103,7 @@ export default function LessonContent({
   
   
   const generateParagraphAudio = useCallback(async (paragraphs: string[]) => {
-    console.log('🎤 Generating audio for', paragraphs.length, 'paragraphs...')
+    logger.info('🎤 Generating audio for paragraphs:', { paragraphCount: paragraphs.length })
     setIsGeneratingAudio(true)
     
     const newAudioUrls: string[] = []
@@ -112,21 +113,21 @@ export default function LessonContent({
     const playNextSegment = () => {
       currentPlayingIndex++
       if (currentPlayingIndex < newAudioElements.length) {
-        console.log(`🎵 Playing audio segment ${currentPlayingIndex + 1}/${newAudioElements.length}`)
+        logger.info('🎵 Playing audio segment:', { current: currentPlayingIndex + 1, total: newAudioElements.length })
         setCurrentAudioIndex(currentPlayingIndex)
         setCurrentAudioElement(newAudioElements[currentPlayingIndex])
         newAudioElements[currentPlayingIndex].play().catch(err => {
-          console.error('⚠️ Failed to play next audio:', err)
+          logger.error('⚠️ Failed to play next audio:', { error: err })
         })
       } else {
-        console.log('🎵 All audio segments completed')
+        logger.info('🎵 All audio segments completed')
         setIsPlaying(false)
       }
     }
     
     try {
       for (let i = 0; i < paragraphs.length; i++) {
-        console.log(`🎤 Generating audio for paragraph ${i + 1}/${paragraphs.length}`)
+        logger.info('🎤 Generating audio for paragraph:', { current: i + 1, total: paragraphs.length })
         
         const response = await fetch("/api/generate-lesson-audio", {
           method: "POST",
@@ -139,7 +140,7 @@ export default function LessonContent({
           }),
         })
         
-        console.log(`📡 Audio API response status for paragraph ${i + 1}:`, response.status)
+        logger.info('📡 Audio API response status for paragraph:', { paragraphIndex: i + 1, status: response.status })
         
         if (!response.ok) {
           throw new Error(`Failed to generate audio for paragraph ${i + 1}`)
@@ -147,7 +148,7 @@ export default function LessonContent({
         
         // Get the audio blob
         const audioBlob = await response.blob()
-        console.log(`✅ Received audio blob for paragraph ${i + 1}:`, audioBlob.size, 'bytes')
+        logger.info('✅ Received audio blob for paragraph:', { paragraphIndex: i + 1, size: audioBlob.size })
         
         // Create object URL for the audio
         const audioUrl = URL.createObjectURL(audioBlob)
@@ -158,7 +159,7 @@ export default function LessonContent({
         
         // Set up event listeners
         audio.addEventListener('ended', () => {
-          console.log(`🎵 Audio segment ${i + 1} ended`)
+          logger.info('🎵 Audio segment ended:', { segmentIndex: i + 1 })
           playNextSegment()
         })
         
@@ -181,7 +182,7 @@ export default function LessonContent({
           setCurrentAudioIndex(0) // Ensure first paragraph is highlighted
           
           audio.addEventListener('loadedmetadata', () => {
-            console.log('🎵 First audio loaded, duration:', audio.duration, 'seconds')
+            logger.info('🎵 First audio loaded:', { duration: audio.duration })
           })
           
           // Continue generating remaining audio in background
@@ -195,11 +196,11 @@ export default function LessonContent({
       setAudioUrls(newAudioUrls)
       setAudioElements(newAudioElements)
       
-      console.log('✅ All paragraph audio generated successfully')
+      logger.info('✅ All paragraph audio generated successfully')
       setIsGeneratingAudio(false)
       
     } catch (err) {
-      console.error('💥 Error generating paragraph audio:', err)
+      logger.error('💥 Error generating paragraph audio:', { error: err })
       setIsGeneratingAudio(false)
     }
   }, [])
@@ -228,7 +229,7 @@ export default function LessonContent({
         .map(p => p.trim())
         .filter(p => p.length > 0)
       
-      console.log('📝 Split content into', contentParagraphs.length, 'paragraphs')
+      logger.info('📝 Split content into paragraphs:', { paragraphCount: contentParagraphs.length })
       setParagraphs(contentParagraphs)
       
       // Start generating audio for all paragraphs
