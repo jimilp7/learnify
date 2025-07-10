@@ -1,6 +1,7 @@
 import { TTSTestUtils } from "./ttsTest";
 import dotenv from 'dotenv';
 import path from 'path';
+import logger from '@/lib/logger';
 
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -16,9 +17,9 @@ async function test() {
         process.env.RESEMBLE_VOICE_UUID || '',
         "welcome.wav"
       );
-      console.log(`Streaming audio saved to: ${streamingPath}`);
+      logger.info('Streaming audio saved to:', { streamingPath });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', { error });
     } finally {
       // Optional: clean up test files
       // ttsTest.cleanup();
@@ -26,6 +27,6 @@ async function test() {
   }
 
 test().catch(error => {
-    console.error('Failed to run test:', error);
+    logger.error('Failed to run test:', { error });
     process.exit(1);
 });

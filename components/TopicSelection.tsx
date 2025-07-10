@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import logger from "@/lib/logger"
 
 interface TopicSelectionProps {
   onNext: (topic: string) => void
@@ -12,12 +13,12 @@ export default function TopicSelection({ onNext }: TopicSelectionProps) {
 
   const handleSubmit = () => {
     const trimmedTopic = topic.trim()
-    console.log('📝 Topic submission attempt:', trimmedTopic)
+    logger.info('📝 Topic submission attempt:', { trimmedTopic })
     if (trimmedTopic) {
-      console.log('✅ Valid topic, calling onNext')
+      logger.info('✅ Valid topic, calling onNext')
       onNext(trimmedTopic)
     } else {
-      console.log('❌ Empty topic, submission blocked')
+      logger.warn('❌ Empty topic, submission blocked')
     }
   }
 
