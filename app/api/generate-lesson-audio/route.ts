@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ResembleTTS, AudioPrecision } from '@/app/api/backend/tts';
+import logger from '@/lib/logger';
 
 // Types for request body
 interface GenerateAudioRequest {
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    console.error('Audio generation error:', error);
+    logger.error('Audio generation error', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
       { error: 'Failed to generate audio' },
       { status: 500 }

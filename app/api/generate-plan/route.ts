@@ -1,45 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateLessonPlan } from '@/lib/openai'
+import logger from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
-  console.log('\n🌐 API /generate-plan endpoint called')
+  logger.info('🌐 API /generate-plan endpoint called')
   const startTime = Date.now()
   
   try {
-    console.log('📥 Parsing request body...')
+    logger.info('📥 Parsing request body...')
     const body = await request.json()
-    console.log('📋 Request body:', body)
+    logger.info('📋 Request body received', { body })
     
     const { topic, depth } = body
 
     if (!topic || !depth) {
-      console.error('❌ Missing required fields:', { topic: !!topic, depth: !!depth })
+      logger.error('❌ Missing required fields', { topic: !!topic, depth: !!depth })
       return NextResponse.json(
         { error: 'Topic and depth are required' },
         { status: 400 }
       )
     }
 
-    console.log('✅ Request validation passed')
-    console.log('🔄 Calling generateLessonPlan...')
+    logger.info('✅ Request validation passed')
+    logger.info('🔄 Calling generateLessonPlan...')
     
     const lessons = await generateLessonPlan(topic, depth)
     
     const endTime = Date.now()
     const duration = endTime - startTime
     
-    console.log('🎉 Lesson plan generation completed successfully!')
-    console.log('⏱️ Total API call duration:', duration, 'ms')
-    console.log('📤 Returning', lessons.length, 'lessons to client')
+    logger.info('🎉 Lesson plan generation completed successfully!')
+    logger.info('⏱️ Total API call duration', { duration })
+    logger.info('📤 Returning lessons to client', { lessonCount: lessons.length })
     
     return NextResponse.json({ lessons })
   } catch (error) {
     const endTime = Date.now()
     const duration = endTime - startTime
     
-    console.error('🚨 API Error after', duration, 'ms:')
-    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error)
-    console.error('Error message:', error instanceof Error ? error.message : String(error))
+    logger.error('🚨 API Error', { 
+      duration, 
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error)
+    })
     
     return NextResponse.json(
       { error: 'Failed to generate lesson plan' },
