@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateLessonContent } from '@/lib/openai'
+import { log } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
-  console.log('\n🌐 API /generate-content endpoint called')
+  log.info('🌐 API /generate-content endpoint called')
   const startTime = Date.now()
   
   try {
-    console.log('📥 Parsing request body...')
+    log.debug('📥 Parsing request body...')
     const body = await request.json()
-    console.log('📋 Request body:', body)
+    log.debug('📋 Request body:', body)
     
     const { topic, depth, lessonTitle, lessonDescription, duration } = body
 
     if (!topic || !depth || !lessonTitle || !lessonDescription || !duration) {
-      console.error('❌ Missing required fields:', { 
+      log.error('❌ Missing required fields:', { 
         topic: !!topic, 
         depth: !!depth, 
         lessonTitle: !!lessonTitle, 
@@ -26,26 +27,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('✅ Request validation passed')
-    console.log('🔄 Calling generateLessonContent...')
+    log.info('✅ Request validation passed')
+    log.info('🔄 Calling generateLessonContent...')
     
     const content = await generateLessonContent(topic, depth, lessonTitle, lessonDescription, duration)
     
     const endTime = Date.now()
     const durationMs = endTime - startTime
     
-    console.log('🎉 Lesson content generation completed successfully!')
-    console.log('⏱️ Total API call duration:', durationMs, 'ms')
-    console.log('📤 Returning content length:', content.length, 'characters')
+    log.info('🎉 Lesson content generation completed successfully!')
+    log.info('⏱️ Total API call duration:', { duration_ms: durationMs })
+    log.info('📤 Returning content', { content_length: content.length })
     
     return NextResponse.json({ content })
   } catch (error) {
     const endTime = Date.now()
     const durationMs = endTime - startTime
     
-    console.error('🚨 API Error after', durationMs, 'ms:')
-    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error)
-    console.error('Error message:', error instanceof Error ? error.message : String(error))
+    log.error('🚨 API Error', { duration_ms: durationMs })
+    log.error('Error type:', { error_type: error instanceof Error ? error.constructor.name : typeof error })
+    log.error('Error message:', { error_message: error instanceof Error ? error.message : String(error) })
     
     return NextResponse.json(
       { error: 'Failed to generate lesson content' },
