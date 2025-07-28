@@ -101,6 +101,9 @@ learnify/
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+---
+*Sample PR test update*
+
 ## Acknowledgments
 
 - Built with [Next.js](https://nextjs.org)
