@@ -1,116 +1,132 @@
 # Learnify - AI Audio Learning Platform
 
-## Overview
-Learnify is "Spotify for learning" - an endless stream of short, high-quality AI-generated audio tutorials (3-5 minutes each) tailored to user interests and understanding level.
+Learnify is "Spotify for learning" - an endless stream of short, high-quality AI-generated audio tutorials (3-5 minutes each) tailored to user interests and understanding level. The application provides a complete audio learning experience from topic selection to AI-generated lesson playback with professional text-to-speech synthesis.
 
-## Current Implementation Status
-**✅ COMPLETED:**
-- Topic Selection screen with autoFocus and Learnify branding
-- Depth Selection screen with green color variants (Simple/Normal/Advanced)
-- Generating Plan loading screen with spinner 
-- AI-powered Lesson Plan generation using OpenAI GPT-4
-- Mobile-first responsive design with sticky CTAs
-- Expandable lesson descriptions
-- Comprehensive console logging throughout the app
-- API integration with OpenAI for real lesson plan generation
+## Project Structure
 
-**🚧 TODO (Next Session):**
-- Audio generation using Resemble AI
-- Audio playback screen/component
-- Script generation for individual lessons
-- Authentication system
-- Local storage persistence
-
-## User Flow (Current)
-1. **Topic Selection**: User enters what they want to learn about
-   - Large text area with autoFocus
-   - Blue focus ring, disabled state handling
-2. **Depth Level**: User selects learning depth:
-   - Simple (ELI5) - green-400
-   - Normal (High School) - green-500  
-   - Advanced (PhD/Researcher) - green-600
-3. **Generating Plan**: Loading screen with spinner while AI generates lessons
-   - Shows topic and depth selection
-   - Typically takes 10-30 seconds
-4. **Lesson Plan**: AI-generated lessons displayed (10-15 lessons)
-   - Each lesson: title, description, duration (3-5 min)
-   - Expandable descriptions (2 lines default, click to expand)
-   - User reviews plan and clicks "Start Learning"
-5. **Audio Generation**: (TODO - Next phase)
-6. **Audio Playback**: (TODO - Next phase)
-
-## Technical Stack
-- **Framework**: Next.js 15+ with App Router
-- **UI**: shadcn-ui (pre-initialized)
-- **Icons**: lucide-react
-- **Styling**: Tailwind CSS
-- **AI Integration**: OpenAI SDK (GPT-4)
-- **API**: Next.js API routes (/api/generate-plan)
-- **Environment**: .env.local with OPENAI_API_KEY configured
-- **Deployment**: Vercel (ready)
-
-## File Structure
 ```
-app/
-├── page.tsx           # Main app with screen navigation
-├── layout.tsx         # Root layout with Learnify branding
-├── globals.css        # Global styles
-└── api/
-    └── generate-plan/
-        └── route.ts   # OpenAI API integration
-
-components/
-├── TopicSelection.tsx     # Topic input screen
-├── DepthSelection.tsx     # Learning depth selection
-├── GeneratingPlan.tsx     # Loading screen with spinner
-└── LessonPlan.tsx         # AI-generated lesson display
-
-lib/
-└── openai.ts         # OpenAI service integration
-
-.env.local            # Environment variables (API key configured)
+learnify/
+├── app/                                  # Next.js App Router application
+│   ├── api/                             # API routes for AI integration
+│   │   ├── backend/                     # Backend services
+│   │   │   ├── playground.ts           # TTS testing playground
+│   │   │   ├── tts.ts                  # Resemble AI TTS integration
+│   │   │   └── ttsTest.ts              # TTS utility functions
+│   │   ├── generate-content/           # Lesson content generation
+│   │   │   └── route.ts               # OpenAI content generation API
+│   │   ├── generate-lesson-audio/      # Audio synthesis
+│   │   │   └── route.ts               # Resemble AI audio generation
+│   │   └── generate-plan/              # Lesson planning
+│   │       └── route.ts               # OpenAI lesson plan generation
+│   ├── layout.tsx                      # Root layout with Learnify branding
+│   ├── page.tsx                        # Main application controller
+│   └── globals.css                     # Global styles and Tailwind config
+├── components/                          # React components
+│   ├── ui/                             # shadcn-ui base components
+│   │   ├── button.tsx                 # Button component variants
+│   │   ├── card.tsx                   # Card layout components
+│   │   ├── input.tsx                  # Form input components
+│   │   ├── label.tsx                  # Form label components
+│   │   ├── radio-group.tsx            # Radio button groups
+│   │   ├── scroll-area.tsx            # Scrollable content areas
+│   │   └── textarea.tsx               # Text area inputs
+│   ├── AudioPlayer.tsx                 # Audio playback controls and playlist
+│   ├── DepthSelection.tsx              # Learning depth selection screen
+│   ├── GeneratingContent.tsx           # Content generation loading screen
+│   ├── GeneratingPlan.tsx              # Plan generation loading screen
+│   ├── LessonContent.tsx               # Audio lesson playback screen
+│   ├── LessonPlan.tsx                  # AI-generated lesson plan display
+│   └── TopicSelection.tsx              # Topic input screen
+├── lib/                                # Utility libraries
+│   ├── constants.ts                    # Application constants
+│   ├── openai.ts                       # OpenAI GPT-4 integration
+│   └── utils.ts                        # Utility functions
+├── .env.local                          # Environment variables (API keys)
+├── components.json                     # shadcn-ui configuration
+├── eslint.config.mjs                   # ESLint configuration
+├── middleware.ts                       # HTTP Basic Auth middleware
+├── next.config.ts                      # Next.js configuration
+├── package.json                        # Dependencies and scripts
+├── postcss.config.mjs                  # PostCSS configuration
+└── tsconfig.json                       # TypeScript configuration
 ```
 
-## Design System
-- **Colors**: 
-  - Primary CTAs: Blue (blue-500/600)
-  - Depth levels: Green variants (green-400/500/600)
-  - Focus rings: Blue (blue-200)
-- **Typography**: Large fonts for mobile accessibility
-- **Layout**: Mobile-first, sticky bottom CTAs
-- **Interactions**: Smooth transitions, hover states
+## Build & Commands
 
-## API Integration Details
-- **Model**: GPT-4 via OpenAI SDK
-- **Endpoint**: POST /api/generate-plan
-- **Request**: { topic: string, depth: string }
-- **Response**: { lessons: LessonPlanData[] }
-- **Error Handling**: User-friendly error messages with retry
+- Start development server: `npm run dev --turbopack`
+- Build for production: `npm run build`
+- Start production server: `npm run start`
+- Run linting: `npm run lint`
 
-## Logging Implementation
-Comprehensive console.log statements throughout:
-- 🏠 Component lifecycle events
-- 🎯 User interactions and navigation
-- 🚀 API calls with request/response data
-- 🤖 OpenAI integration with token usage
-- ⏱️ Performance timing information
-- 💥 Error handling with detailed context
+### Development Environment
 
-## Key Features (Implemented)
-- Mobile-optimized responsive design
-- Real-time AI lesson plan generation
-- Expandable lesson descriptions
-- Smooth navigation between screens
-- Error handling with user feedback
-- Performance monitoring via console logs
+- Development server: http://localhost:3000
+- Authentication: HTTP Basic Auth (username: `learnify`, password: `agihouse`)
+- API routes available at `/api/*`
 
-## Development Commands
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint (if available)
+## Code Style
 
-## Project Constraints
-- Built for hackathon - keep it simple
-- No backend database (local storage only)
-- Minimal authentication (not yet implemented)
-- Focus on core learning experience first
+- TypeScript: Strict mode with comprehensive type checking
+- Imports: Path aliases using `@/*` for clean imports
+- Tabs for indentation, consistent formatting
+- Single quotes, trailing commas
+- Use descriptive variable/function names
+- Client components marked with "use client" directive
+- Comprehensive console logging with emoji indicators throughout
+- Component interfaces defined with TypeScript
+- Props-based communication between components
+
+## Testing
+
+**Current State**: No testing framework is configured. The codebase lacks:
+- Unit tests (no Jest, Vitest, or similar)
+- Integration tests  
+- E2E tests (no Playwright, Cypress)
+- Test files or configurations
+
+This represents a significant gap for production deployment.
+
+## Architecture
+
+- **Frontend**: Next.js 15.3.3 with App Router and React 19
+- **Language**: TypeScript v5 with strict configuration
+- **Styling**: Tailwind CSS v4 with shadcn-ui components
+- **AI Integration**: OpenAI GPT-4 (o3-mini model) for content generation
+- **Audio Synthesis**: Resemble AI for text-to-speech conversion
+- **State Management**: React local state with prop drilling
+- **Authentication**: HTTP Basic Auth via Next.js middleware
+- **Build System**: Next.js with Turbopack integration
+- **UI Components**: Radix UI primitives with shadcn-ui system
+
+## Security
+
+- HTTP Basic Authentication with hardcoded credentials (development only)
+- Environment variables for API keys (OpenAI, Resemble AI)
+- No sensitive data logging or exposure
+- Middleware-based route protection
+- Input validation on API routes
+
+## Git Workflow
+
+- ALWAYS run `npm run lint` before committing
+- Run `npm run build` to verify typecheck passes
+- NEVER use `git push --force` on the main branch
+- Use descriptive commit messages
+
+## Configuration
+
+**Environment Variables Required:**
+- `OPENAI_API_KEY`: OpenAI API key for GPT-4 access
+- `RESEMBLE_API_KEY`: Resemble AI API key for TTS synthesis
+
+**Key Configuration Files:**
+- `.env.local`: Environment variables (not committed)
+- `components.json`: shadcn-ui configuration ("new-york" style)
+- `tsconfig.json`: TypeScript strict mode with path aliases
+- `middleware.ts`: Authentication configuration
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
