@@ -95,7 +95,7 @@ export default function LessonPlan({ topic, lessons, onStart, onBack }: LessonPl
         <div className="max-w-md mx-auto">
           <Button 
             onClick={onStart}
-            className="w-full h-16 text-xl rounded-2xl bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center gap-3"
+            className="w-full h-16 text-xl rounded-2xl bg-green-500 hover:bg-green-600 transition-colors flex items-center justify-center gap-3"
           >
             <PlayCircle className="w-6 h-6" />
             Start Learning
