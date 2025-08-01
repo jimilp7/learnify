@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Your personal AI tutor - Spotify for learning",
 };
 
+const bodyClassName = `${geistSans.variable} ${geistMono.variable} antialiased`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,9 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={bodyClassName}>
         {children}
       </body>
     </html>
