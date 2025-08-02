@@ -12,6 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const bodyClassName = `${geistSans.variable} ${geistMono.variable} antialiased`;
+
 export const metadata: Metadata = {
   title: "Learnify 🤓",
   description: "Your personal AI tutor - Spotify for learning",
@@ -25,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={bodyClassName}
       >
         {children}
       </body>
