@@ -10,12 +10,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('📋 Request body:', body)
     
-    const { topic, depth, lessonTitle, lessonDescription, duration } = body
+    const { topic, depth, learningStyle, lessonTitle, lessonDescription, duration } = body
 
-    if (!topic || !depth || !lessonTitle || !lessonDescription || !duration) {
+    if (!topic || !depth || !learningStyle || !lessonTitle || !lessonDescription || !duration) {
       console.error('❌ Missing required fields:', { 
         topic: !!topic, 
-        depth: !!depth, 
+        depth: !!depth,
+        learningStyle: !!learningStyle, 
         lessonTitle: !!lessonTitle, 
         lessonDescription: !!lessonDescription,
         duration: !!duration 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Request validation passed')
     console.log('🔄 Calling generateLessonContent...')
     
-    const content = await generateLessonContent(topic, depth, lessonTitle, lessonDescription, duration)
+    const content = await generateLessonContent(topic, depth, learningStyle, lessonTitle, lessonDescription, duration)
     
     const endTime = Date.now()
     const durationMs = endTime - startTime

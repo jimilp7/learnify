@@ -12,22 +12,32 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string): Promise<LessonPlanData[]> {
+export async function generateLessonPlan(topic: string, depth: string, learningStyle: string): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Learning Style:', learningStyle)
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
     normal: "High school level - use clear explanations with some technical terms, practical examples",
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
+
+  const learningStyleContext = {
+    visual: "Focus on visual examples, diagrams, and imagery that can be described in audio. Use visual metaphors and spatial concepts.",
+    auditory: "Emphasize listening, rhythm, patterns, and verbal explanations. Use repetition and verbal analogies.",
+    kinesthetic: "Focus on hands-on examples, practical applications, and real-world scenarios. Emphasize movement and physical interaction.",
+    reading: "Use structured information, lists, definitions, and detailed explanations. Focus on clear, organized content."
+  }
   
   console.log('📄 Using depth context:', depthContext[depth as keyof typeof depthContext])
+  console.log('🎨 Using learning style context:', learningStyleContext[learningStyle as keyof typeof learningStyleContext])
 
   const prompt = `Create a comprehensive audio learning plan for the topic: "${topic}"
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Learning style: ${learningStyleContext[learningStyle as keyof typeof learningStyleContext]}
 
 Generate exactly ${MIN_LESSONS}-${MAX_LESSONS} lessons that build upon each other logically. Each lesson should be ${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes long and designed for audio consumption.
 
@@ -42,6 +52,7 @@ Design principles:
 - Build curiosity for the next lesson (create natural progression hooks)
 - Use storytelling and analogies appropriate for audio learning
 - Ensure each lesson delivers a satisfying "aha moment" or practical insight
+- IMPORTANT: Tailor the teaching approach to match the specified learning style preferences
 
 Return the response as a JSON array with this exact structure:
 [
@@ -132,6 +143,7 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
 export async function generateLessonContent(
   topic: string, 
   depth: string, 
+  learningStyle: string,
   lessonTitle: string, 
   lessonDescription: string, 
   duration: number
@@ -139,6 +151,7 @@ export async function generateLessonContent(
   console.log('🤖 OpenAI generateLessonContent called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Learning Style:', learningStyle)
   console.log('  - Lesson:', lessonTitle)
   console.log('  - Duration:', duration, 'minutes')
   
@@ -147,10 +160,18 @@ export async function generateLessonContent(
     normal: "High school level - use clear explanations with some technical terms, practical examples",
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
+
+  const learningStyleContext = {
+    visual: "Focus on visual examples, diagrams, and imagery that can be described in audio. Use visual metaphors and spatial concepts.",
+    auditory: "Emphasize listening, rhythm, patterns, and verbal explanations. Use repetition and verbal analogies.",
+    kinesthetic: "Focus on hands-on examples, practical applications, and real-world scenarios. Emphasize movement and physical interaction.",
+    reading: "Use structured information, lists, definitions, and detailed explanations. Focus on clear, organized content."
+  }
   
   const prompt = `Create a detailed script for an audio lesson on the topic: "${topic}"
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Learning style: ${learningStyleContext[learningStyle as keyof typeof learningStyleContext]}
 Lesson title: "${lessonTitle}"
 Lesson description: "${lessonDescription}"
 Target duration: ${duration} minutes (approximately ${duration * 150} words)
@@ -162,6 +183,7 @@ Create engaging audio content that:
 - Uses conversational tone perfect for audio consumption
 - Builds to a satisfying conclusion with key takeaways
 - Flows naturally when spoken aloud
+- IMPORTANT: Adapts the teaching approach to match the specified learning style preferences
 
 CRITICAL FORMATTING REQUIREMENTS:
 - Keep each paragraph SHORT - only 2-3 sentences max
