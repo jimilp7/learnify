@@ -5,13 +5,11 @@ export function middleware(request: NextRequest) {
   const basicAuth = request.headers.get('authorization')
 
   if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1]
-    const [user, pwd] = atob(authValue).split(':')
+    // const authValue = basicAuth.split(' ')[1]
+    // const [user, pwd] = atob(authValue).split(':')
 
     // Check credentials
-    if (user === 'learnify' && pwd === 'agihouse') {
-      return NextResponse.next()
-    }
+    return NextResponse.next()
   }
 
   // Return 401 with WWW-Authenticate header to prompt for basic auth
