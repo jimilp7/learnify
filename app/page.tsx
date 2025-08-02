@@ -3,12 +3,13 @@
 import { useState } from "react"
 import TopicSelection from "@/components/TopicSelection"
 import DepthSelection from "@/components/DepthSelection"
+import LearningStyleSelection from "@/components/LearningStyleSelection"
 import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
 import GeneratingContent from "@/components/GeneratingContent"
 
-type Screen = "topic" | "depth" | "generating" | "plan" | "generatingContent" | "player"
+type Screen = "topic" | "depth" | "learningStyle" | "generating" | "plan" | "generatingContent" | "player"
 
 interface Lesson {
   id: string
@@ -21,6 +22,7 @@ export default function Home() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("topic")
   const [topic, setTopic] = useState("")
   const [depth, setDepth] = useState("")
+  const [learningStyle, setLearningStyle] = useState("")
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [error, setError] = useState("")
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
@@ -34,16 +36,25 @@ export default function Home() {
     console.log('📱 Screen changed to: depth')
   }
 
-  const handleDepthNext = async (selectedDepth: string) => {
+  const handleDepthNext = (selectedDepth: string) => {
     console.log('🎓 Depth selected:', selectedDepth)
     setDepth(selectedDepth)
+    setCurrentScreen("learningStyle")
+    console.log('📱 Screen changed to: learningStyle')
+    setError("")
+  }
+
+  const handleLearningStyleNext = async (selectedLearningStyle: string) => {
+    console.log('🎨 Learning style selected:', selectedLearningStyle)
+    setLearningStyle(selectedLearningStyle)
     setCurrentScreen("generating")
     console.log('📱 Screen changed to: generating')
     setError("")
     
     const requestPayload = {
       topic,
-      depth: selectedDepth,
+      depth,
+      learningStyle: selectedLearningStyle,
     }
     console.log('🚀 Starting API call to generate lesson plan with payload:', requestPayload)
     
@@ -71,10 +82,10 @@ export default function Home() {
       setCurrentScreen("plan")
       console.log('📱 Screen changed to: plan')
     } catch (err) {
-      console.error('💥 Error in handleDepthNext:', err)
+      console.error('💥 Error in handleLearningStyleNext:', err)
       setError("Failed to generate lesson plan. Please try again.")
-      setCurrentScreen("depth")
-      console.log('📱 Screen reverted to: depth due to error')
+      setCurrentScreen("learningStyle")
+      console.log('📱 Screen reverted to: learningStyle due to error')
     }
   }
 
@@ -82,6 +93,7 @@ export default function Home() {
     console.log('🎬 Starting learning journey with:')
     console.log('  - Topic:', topic)
     console.log('  - Depth:', depth)
+    console.log('  - Learning Style:', learningStyle)
     console.log('  - Current lesson:', lessons[0].title)
     
     setCurrentLessonIndex(0)
@@ -109,6 +121,7 @@ export default function Home() {
         body: JSON.stringify({
           topic,
           depth,
+          learningStyle,
           lessonTitle: lessons[lessonIndex].title,
           lessonDescription: lessons[lessonIndex].description,
           duration: lessons[lessonIndex].duration
@@ -145,10 +158,15 @@ export default function Home() {
     console.log('⬅️ Navigating back to depth selection')
     setCurrentScreen("depth")
   }
+
+  const handleBackToLearningStyle = () => {
+    console.log('⬅️ Navigating back to learning style selection')
+    setCurrentScreen("learningStyle")
+  }
   
   const handleBackFromGenerating = () => {
-    console.log('⬅️ Navigating back from generating screen to depth selection')
-    setCurrentScreen("depth")
+    console.log('⬅️ Navigating back from generating screen to learning style selection')
+    setCurrentScreen("learningStyle")
   }
   
   const handleBackFromPlayer = () => {
@@ -193,6 +211,7 @@ export default function Home() {
     setCurrentScreen("topic")
     setTopic("")
     setDepth("")
+    setLearningStyle("")
     setLessons([])
     setLessonContent("")
     setLessonContents({})
@@ -213,6 +232,15 @@ export default function Home() {
           error={error}
         />
       )}
+      {currentScreen === "learningStyle" && (
+        <LearningStyleSelection 
+          topic={topic}
+          depth={depth}
+          onNext={handleLearningStyleNext} 
+          onBack={handleBackToDepth}
+          error={error}
+        />
+      )}
       {currentScreen === "generating" && (
         <GeneratingPlan 
           topic={topic}
@@ -226,7 +254,7 @@ export default function Home() {
           depth={depth}
           lessons={lessons}
           onStart={handleStart}
-          onBack={handleBackToDepth}
+          onBack={handleBackToLearningStyle}
         />
       )}
       {currentScreen === "generatingContent" && (

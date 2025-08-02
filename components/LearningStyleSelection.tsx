@@ -4,46 +4,64 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
-interface DepthSelectionProps {
+interface LearningStyleSelectionProps {
   topic: string
-  onNext: (depth: string) => void
+  depth: string
+  onNext: (learningStyle: string) => void
   onBack: () => void
   error?: string
 }
 
-const depthOptions = [
+const learningStyleOptions = [
   {
-    value: "simple",
-    label: "Simple",
-    emoji: "🌱",
-    description: "Explain like I'm five",
-    colorClass: "bg-green-400",
-    textColorClass: "text-green-50"
+    value: "visual",
+    label: "Visual",
+    emoji: "👁️",
+    description: "Learn through diagrams, charts, and visual examples",
+    colorClass: "bg-purple-400",
+    textColorClass: "text-purple-50"
   },
   {
-    value: "normal", 
-    label: "Normal",
-    emoji: "🌿",
-    description: "High school level",
-    colorClass: "bg-green-500",
-    textColorClass: "text-green-100"
+    value: "auditory", 
+    label: "Auditory",
+    emoji: "👂",
+    description: "Learn through listening and discussion",
+    colorClass: "bg-purple-500",
+    textColorClass: "text-purple-100"
   },
   {
-    value: "advanced",
-    label: "Advanced",
-    emoji: "🌳",
-    description: "PhD/Researcher level",
-    colorClass: "bg-green-600",
-    textColorClass: "text-green-100"
+    value: "kinesthetic",
+    label: "Hands-on",
+    emoji: "✋",
+    description: "Learn through practice and real examples",
+    colorClass: "bg-purple-600",
+    textColorClass: "text-purple-100"
+  },
+  {
+    value: "reading",
+    label: "Reading",
+    emoji: "📚",
+    description: "Learn through text and written information",
+    colorClass: "bg-purple-700",
+    textColorClass: "text-purple-100"
   }
 ]
 
-export default function DepthSelection({ topic, onNext, onBack, error }: DepthSelectionProps) {
-  const [depth, setDepth] = useState("normal")
+export default function LearningStyleSelection({ topic, depth, onNext, onBack, error }: LearningStyleSelectionProps) {
+  const [learningStyle, setLearningStyle] = useState("auditory")
 
   const handleSubmit = () => {
-    console.log('🚀 Depth selection submitted:', depth)
-    onNext(depth)
+    console.log('🎨 Learning style selected:', learningStyle)
+    onNext(learningStyle)
+  }
+
+  const getDepthLabel = (depth: string) => {
+    const depthMap: { [key: string]: string } = {
+      simple: "Simple (ELI5)",
+      normal: "Normal (High School)",
+      advanced: "Advanced (PhD)"
+    }
+    return depthMap[depth] || depth
   }
 
   return (
@@ -59,10 +77,13 @@ export default function DepthSelection({ topic, onNext, onBack, error }: DepthSe
         <div className="w-full max-w-md space-y-8">
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold">
-              How deep?
+              Learning Style?
             </h1>
             <p className="text-lg text-gray-600">
               Learning: {topic}
+            </p>
+            <p className="text-sm text-gray-500">
+              Level: {getDepthLabel(depth)}
             </p>
           </div>
           
@@ -73,12 +94,12 @@ export default function DepthSelection({ topic, onNext, onBack, error }: DepthSe
           )}
           
           <div className="space-y-4">
-            {depthOptions.map((option) => (
+            {learningStyleOptions.map((option) => (
               <button
                 key={option.value}
-                onClick={() => setDepth(option.value)}
+                onClick={() => setLearningStyle(option.value)}
                 className={`w-full p-6 rounded-2xl transition-all ${
-                  depth === option.value
+                  learningStyle === option.value
                     ? `${option.colorClass} text-white scale-105`
                     : "bg-gray-50 hover:bg-gray-100"
                 }`}
@@ -87,7 +108,7 @@ export default function DepthSelection({ topic, onNext, onBack, error }: DepthSe
                   <div className="text-left">
                     <div className="text-xl font-semibold">{option.label}</div>
                     <div className={`text-sm mt-1 ${
-                      depth === option.value ? option.textColorClass : "text-gray-500"
+                      learningStyle === option.value ? option.textColorClass : "text-gray-500"
                     }`}>
                       {option.description}
                     </div>
