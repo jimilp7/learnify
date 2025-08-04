@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('📋 Request body:', body)
     
-    const { topic, depth } = body
+    const { topic, depth, learningStyle } = body
 
     if (!topic || !depth) {
       console.error('❌ Missing required fields:', { topic: !!topic, depth: !!depth })
@@ -20,10 +20,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate learning style if provided
+    if (learningStyle && !['visual', 'auditory', 'kinesthetic', 'analytical'].includes(learningStyle)) {
+      console.error('❌ Invalid learning style:', learningStyle)
+      return NextResponse.json(
+        { error: 'Invalid learning style' },
+        { status: 400 }
+      )
+    }
+
     console.log('✅ Request validation passed')
     console.log('🔄 Calling generateLessonPlan...')
     
-    const lessons = await generateLessonPlan(topic, depth)
+    const lessons = await generateLessonPlan(topic, depth, learningStyle)
     
     const endTime = Date.now()
     const duration = endTime - startTime

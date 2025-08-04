@@ -12,22 +12,34 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string): Promise<LessonPlanData[]> {
+export async function generateLessonPlan(topic: string, depth: string, learningStyle?: string): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Learning Style:', learningStyle)
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
     normal: "High school level - use clear explanations with some technical terms, practical examples",
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
+
+  const learningStyleContext = {
+    visual: "Emphasize visual elements, diagrams, charts, and structured information. Use descriptions that help learners visualize concepts and patterns.",
+    auditory: "Focus on storytelling, verbal explanations, and discussions. Use analogies, repetition, and conversational style that flows well when spoken.",
+    kinesthetic: "Highlight practical applications, hands-on examples, and real-world scenarios. Emphasize how learners can apply and practice concepts.",
+    analytical: "Stress logical progression, systematic breakdowns, and step-by-step analysis. Focus on patterns, frameworks, and structured thinking."
+  }
   
   console.log('📄 Using depth context:', depthContext[depth as keyof typeof depthContext])
+  console.log('🎨 Using learning style context:', learningStyle ? learningStyleContext[learningStyle as keyof typeof learningStyleContext] : 'None specified')
+
+  const learningStylePrompt = learningStyle ? `
+Learning style preference: ${learningStyleContext[learningStyle as keyof typeof learningStyleContext]}` : ''
 
   const prompt = `Create a comprehensive audio learning plan for the topic: "${topic}"
 
-Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Learning level: ${depthContext[depth as keyof typeof depthContext]}${learningStylePrompt}
 
 Generate exactly ${MIN_LESSONS}-${MAX_LESSONS} lessons that build upon each other logically. Each lesson should be ${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes long and designed for audio consumption.
 
@@ -134,23 +146,35 @@ export async function generateLessonContent(
   depth: string, 
   lessonTitle: string, 
   lessonDescription: string, 
-  duration: number
+  duration: number,
+  learningStyle?: string
 ): Promise<string> {
   console.log('🤖 OpenAI generateLessonContent called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
   console.log('  - Lesson:', lessonTitle)
   console.log('  - Duration:', duration, 'minutes')
+  console.log('  - Learning Style:', learningStyle)
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
     normal: "High school level - use clear explanations with some technical terms, practical examples",
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
+
+  const learningStyleContext = {
+    visual: "Use vivid descriptions that help listeners visualize concepts. Describe diagrams, charts, and visual patterns. Structure information clearly and use spatial metaphors.",
+    auditory: "Emphasize storytelling, use rhythm and repetition. Include analogies, conversational tone, and verbal cues that make the content engaging to listen to.",
+    kinesthetic: "Focus on practical applications and real-world examples. Encourage mental practice and hands-on thinking. Connect abstract concepts to physical actions and experiences.",
+    analytical: "Present information in logical, step-by-step sequences. Use frameworks, systematic breakdowns, and clear cause-and-effect relationships."
+  }
+
+  const learningStylePrompt = learningStyle ? `
+Learning style approach: ${learningStyleContext[learningStyle as keyof typeof learningStyleContext]}` : ''
   
   const prompt = `Create a detailed script for an audio lesson on the topic: "${topic}"
 
-Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Learning level: ${depthContext[depth as keyof typeof depthContext]}${learningStylePrompt}
 Lesson title: "${lessonTitle}"
 Lesson description: "${lessonDescription}"
 Target duration: ${duration} minutes (approximately ${duration * 150} words)
