@@ -13,6 +13,7 @@ Learnify transforms any topic into bite-sized, engaging audio lessons (3-5 minut
 ## Features
 
 - **🎯 Adaptive Learning**: Choose from Simple (ELI5), Normal (High School), or Advanced (PhD/Researcher) difficulty levels
+- **🎨 Learning Style Personalization**: Tailor content to Visual, Auditory, Hands-on, or Analytical preferences
 - **🤖 AI-Generated Content**: Powered by OpenAI GPT-4 for lesson planning and content generation
 - **🎵 Text-to-Speech**: High-quality audio synthesis using Resemble AI
 - **📱 Mobile-First Design**: Optimized for learning on the go
