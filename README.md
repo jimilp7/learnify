@@ -1,4 +1,4 @@
-# Learnify - AI Audio Learning Platform
+# 🎧 Learnify - AI Audio Learning Platform
 
 **"Spotify for Learning"** - An endless stream of short, high-quality AI-generated audio tutorials tailored to your interests and understanding level.
 
