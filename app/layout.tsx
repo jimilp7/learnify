@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Learnify 🤓",
+  title: "Learnify 🤓📚",
   description: "Your personal AI tutor - Spotify for learning",
 };
 
