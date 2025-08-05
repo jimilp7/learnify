@@ -104,4 +104,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Built with [Next.js](https://nextjs.org)
 - Powered by [OpenAI](https://openai.com)
 - Audio synthesis by [Resemble AI](https://resemble.ai)
-- UI components from [shadcn/ui](https://ui.shadcn.com)
+- UI components from [shadcn/ui](https://ui.shadcn.com).
