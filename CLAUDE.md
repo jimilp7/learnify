@@ -1,7 +1,7 @@
-# Learnify - AI Audio Learning Platform
+# Learnify 📚 - AI Audio Learning Platform
 
 ## Overview
-Learnify is "Spotify for learning" - an endless stream of short, high-quality AI-generated audio tutorials (3-5 minutes each) tailored to user interests and understanding level.
+Learnify is "Spotify for learning" - an endless stream of short, high-quality AI-generated audio tutorials (3-5 minutes each) tailored to user interests and learning level.
 
 ## Current Implementation Status
 **✅ COMPLETED:**
