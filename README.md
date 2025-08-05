@@ -105,3 +105,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Powered by [OpenAI](https://openai.com)
 - Audio synthesis by [Resemble AI](https://resemble.ai)
 - UI components from [shadcn/ui](https://ui.shadcn.com)
+- Made with ❤️ for learners everywhere
