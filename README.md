@@ -4,7 +4,8 @@
 
 ![Learnify Screenshot](https://i.imgur.com/fPYXJSq.png)
 
-🎧 **Live Demo**: [https://learnify.swiftace.org](https://learnify.swiftace.org) ✨
+🎧 **Live Demo**: [https://learnify.swiftace.org](https://learnify.swiftace.org) ✨  
+Try it now!
 
 ## Overview
 
