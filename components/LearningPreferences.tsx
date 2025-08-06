@@ -10,7 +10,16 @@ interface LearningPreferencesProps {
   onBack: () => void
 }
 
-const preferenceOptions = [
+interface PreferenceOption {
+  value: string
+  label: string
+  emoji: string
+  description: string
+  colorClass: string
+  textColorClass: string
+}
+
+const preferenceOptions: PreferenceOption[] = [
   {
     value: "visual",
     label: "Visual",
@@ -112,6 +121,8 @@ export default function LearningPreferences({ topic, onNext, onBack }: LearningP
                     ? `${option.colorClass} text-white scale-[1.02] shadow-lg`
                     : "bg-gray-50 hover:bg-gray-100 hover:scale-[1.01]"
                 }`}
+                aria-pressed={selectedPreferences.includes(option.value)}
+                aria-label={`Toggle ${option.label} learning preference`}
               >
                 <div className="flex items-center justify-between">
                   <div className="text-left">

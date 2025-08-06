@@ -1,80 +1,73 @@
 {
-  "feature": "Learning Preferences Selection",
-  "demonstration_steps": [
+  "title": "Learning Preferences Feature - Visual Demonstration Guide",
+  "timestamp": "2025-08-06T05:27:59.977Z",
+  "steps": [
     {
       "step": 1,
-      "title": "Topic Selection Screen",
-      "description": "User enters their learning topic",
-      "expected_state": "Large textarea with 'What would you like to learn about?' placeholder",
-      "verification": "autoFocus working, responsive design"
+      "action": "Navigate to http://localhost:3000",
+      "expected": "See topic selection screen with Learnify branding",
+      "screenshot": "Would show topic input screen"
     },
     {
       "step": 2,
-      "title": "Learning Preferences Screen",
-      "description": "New screen asking 'How do you learn best?'",
-      "expected_state": "6 clickable preference boxes with emojis and descriptions",
-      "verification": "Topic displayed, 'Select all that apply' instruction visible"
+      "action": "Type \"JavaScript programming\" in the textarea",
+      "expected": "Text appears in focused textarea with blue border",
+      "screenshot": "Would show topic being typed"
     },
     {
       "step": 3,
-      "title": "Single Preference Selection",
-      "description": "User clicks Visual preference",
-      "expected_state": "Visual box changes to purple color with scale animation",
-      "verification": "Next button becomes enabled"
+      "action": "Click Next button",
+      "expected": "Navigate to learning preferences screen",
+      "screenshot": "Would show preferences screen with \"How do you learn best?\" title"
     },
     {
       "step": 4,
-      "title": "Multiple Preference Selection",
-      "description": "User adds Auditory and Hands-on preferences",
-      "expected_state": "Multiple boxes selected with different colors (blue, orange)",
-      "verification": "Each preference maintains distinct visual state"
+      "action": "Observe all 6 preference options",
+      "expected": "Visual 👁️, Auditory 🎧, Hands-on 🤲, Reading/Writing 📚, Social 👥, Independent 🧘",
+      "screenshot": "Would show all 6 preference boxes in default gray state"
     },
     {
       "step": 5,
-      "title": "Deselection Test",
-      "description": "User clicks Visual preference again to deselect",
-      "expected_state": "Visual box returns to gray unselected state",
-      "verification": "Toggle functionality working correctly"
+      "action": "Click Visual preference",
+      "expected": "Box turns purple with white text and selection indicator",
+      "screenshot": "Would show Visual box selected in purple"
     },
     {
       "step": 6,
-      "title": "Final Preference Selection",
-      "description": "User selects Visual, Auditory, Hands-on, Reading/Writing",
-      "expected_state": "4 preferences selected with distinct colors",
-      "verification": "All preferences have proper visual feedback"
+      "action": "Click Hands-on and Reading/Writing preferences",
+      "expected": "Multiple boxes selected with different colors (orange, emerald)",
+      "screenshot": "Would show 3 preferences selected with color-coded states"
     },
     {
       "step": 7,
-      "title": "Navigation to Depth Selection",
-      "description": "User clicks Next to proceed to depth selection",
-      "expected_state": "Depth selection screen with learning preferences saved",
-      "verification": "State management working, preferences preserved"
+      "action": "Click Visual preference again",
+      "expected": "Visual box deselected, returns to gray state",
+      "screenshot": "Would show Visual box deselected while others remain selected"
     },
     {
       "step": 8,
-      "title": "AI Generation Integration",
-      "description": "User completes flow triggering AI lesson plan generation",
-      "expected_state": "Generating screen shows preferences are being used",
-      "verification": "Preferences sent to OpenAI API for personalization"
+      "action": "Click Next button",
+      "expected": "Navigate to depth selection screen",
+      "screenshot": "Would show depth selection with Simple/Normal/Advanced options"
+    },
+    {
+      "step": 9,
+      "action": "Click back arrow",
+      "expected": "Return to preferences screen with selections preserved",
+      "screenshot": "Would show preferences screen with Hands-on and Reading/Writing still selected"
+    },
+    {
+      "step": 10,
+      "action": "Continue through depth selection and plan generation",
+      "expected": "Learning preferences used in AI lesson plan generation",
+      "screenshot": "Would show lesson plan generated with personalized content"
     }
   ],
-  "manual_testing_checklist": [
-    "✅ All 6 preference types display correctly",
-    "✅ Click to select shows visual feedback",
-    "✅ Multiple selections work simultaneously",
-    "✅ Click to deselect works properly",
-    "✅ Next button disabled/enabled correctly",
-    "✅ Navigation preserves selected preferences",
-    "✅ Back button returns to topic selection",
-    "✅ Preferences integrated with AI generation",
-    "✅ Mobile responsive design maintained",
-    "✅ Consistent with app styling patterns"
-  ],
-  "feature_validation": {
-    "requirement": "Add a new page asking user to share their learning style preferences",
-    "implementation": "✅ New LearningPreferences component with clickable preference boxes",
-    "integration": "✅ Integrated between topic and depth selection in user flow",
-    "functionality": "✅ Multi-select interface with proper state management",
-    "ai_integration": "✅ Preferences used to personalize OpenAI lesson generation"
+  "technical_implementation": {
+    "component": "LearningPreferences.tsx",
+    "state_management": "useState with string array for selectedPreferences",
+    "visual_feedback": "Conditional CSS classes based on selection state",
+    "navigation": "Integrated into main page navigation flow",
+    "api_integration": "Preferences passed to generate-plan and generate-content endpoints"
   }
 }
