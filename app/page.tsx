@@ -2,13 +2,14 @@
 
 import { useState } from "react"
 import TopicSelection from "@/components/TopicSelection"
+import LearningPreferences from "@/components/LearningPreferences"
 import DepthSelection from "@/components/DepthSelection"
 import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
 import GeneratingContent from "@/components/GeneratingContent"
 
-type Screen = "topic" | "depth" | "generating" | "plan" | "generatingContent" | "player"
+type Screen = "topic" | "preferences" | "depth" | "generating" | "plan" | "generatingContent" | "player"
 
 interface Lesson {
   id: string
@@ -20,6 +21,7 @@ interface Lesson {
 export default function Home() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("topic")
   const [topic, setTopic] = useState("")
+  const [learningPreferences, setLearningPreferences] = useState<string[]>([])
   const [depth, setDepth] = useState("")
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [error, setError] = useState("")
@@ -30,6 +32,13 @@ export default function Home() {
   const handleTopicNext = (selectedTopic: string) => {
     console.log('🎯 Topic selected:', selectedTopic)
     setTopic(selectedTopic)
+    setCurrentScreen("preferences")
+    console.log('📱 Screen changed to: preferences')
+  }
+
+  const handlePreferencesNext = (selectedPreferences: string[]) => {
+    console.log('🎯 Learning preferences selected:', selectedPreferences)
+    setLearningPreferences(selectedPreferences)
     setCurrentScreen("depth")
     console.log('📱 Screen changed to: depth')
   }
@@ -141,6 +150,11 @@ export default function Home() {
     setCurrentScreen("topic")
   }
 
+  const handleBackToPreferences = () => {
+    console.log('⬅️ Navigating back to preferences selection')
+    setCurrentScreen("preferences")
+  }
+
   const handleBackToDepth = () => {
     console.log('⬅️ Navigating back to depth selection')
     setCurrentScreen("depth")
@@ -192,6 +206,7 @@ export default function Home() {
     // Reset all state
     setCurrentScreen("topic")
     setTopic("")
+    setLearningPreferences([])
     setDepth("")
     setLessons([])
     setLessonContent("")
@@ -205,11 +220,18 @@ export default function Home() {
       {currentScreen === "topic" && (
         <TopicSelection onNext={handleTopicNext} />
       )}
+      {currentScreen === "preferences" && (
+        <LearningPreferences 
+          topic={topic}
+          onNext={handlePreferencesNext}
+          onBack={handleBackToTopic}
+        />
+      )}
       {currentScreen === "depth" && (
         <DepthSelection 
           topic={topic} 
           onNext={handleDepthNext} 
-          onBack={handleBackToTopic}
+          onBack={handleBackToPreferences}
           error={error}
         />
       )}
