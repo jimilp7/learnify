@@ -1,0 +1,20 @@
+const { spawn } = require('child_process');
+
+console.log('🧪 Starting manual test validation');
+console.log('📱 Please open http://localhost:3000 in your browser');
+console.log('');
+console.log('Manual Test Checklist:');
+console.log('1️⃣ Enter "JavaScript" as topic and click Next');
+console.log('2️⃣ Verify "How do you learn best?" screen appears');
+console.log('3️⃣ Verify topic displays as "Learning: JavaScript"');
+console.log('4️⃣ Click on "Visual" preference - should turn purple');
+console.log('5️⃣ Click on "Auditory" preference - should turn blue');
+console.log('6️⃣ Click on "Visual" again - should deselect');
+console.log('7️⃣ Click on "Auditory" again - should deselect all');
+console.log('8️⃣ Verify Next button is disabled when no preferences selected');
+console.log('9️⃣ Select multiple preferences (Visual, Hands-on, Independent)');
+console.log('🔟 Click Next - should go to "How deep should we go?" screen');
+console.log('1️⃣1️⃣ Click back button - should return to preferences');
+console.log('1️⃣2️⃣ Click Next again - should go back to depth selection');
+console.log('');
+console.log('✅ All tests passing means the Learning Preferences feature works correctly!');

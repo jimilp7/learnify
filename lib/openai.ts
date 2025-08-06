@@ -12,10 +12,11 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string): Promise<LessonPlanData[]> {
+export async function generateLessonPlan(topic: string, depth: string, learningPreferences: string[] = []): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Learning Preferences:', learningPreferences)
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
@@ -25,9 +26,21 @@ export async function generateLessonPlan(topic: string, depth: string): Promise<
   
   console.log('📄 Using depth context:', depthContext[depth as keyof typeof depthContext])
 
+  // Create learning preferences context
+  const preferencesContext = learningPreferences.length > 0 ? `
+Learning style preferences: ${learningPreferences.join(', ')}
+- Incorporate elements that cater to these learning preferences in your lesson design
+- Visual learners: include descriptive imagery and diagrams in explanations
+- Auditory learners: focus on clear explanations and sound patterns
+- Kinesthetic/Hands-on learners: include practical exercises and real-world applications
+- Reading/Writing learners: provide structured, text-based learning approaches
+- Social learners: include collaborative scenarios and group-based examples
+- Independent learners: focus on self-directed exploration and reflection
+` : ''
+
   const prompt = `Create a comprehensive audio learning plan for the topic: "${topic}"
 
-Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Learning level: ${depthContext[depth as keyof typeof depthContext]}${preferencesContext}
 
 Generate exactly ${MIN_LESSONS}-${MAX_LESSONS} lessons that build upon each other logically. Each lesson should be ${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes long and designed for audio consumption.
 
@@ -132,6 +145,7 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
 export async function generateLessonContent(
   topic: string, 
   depth: string, 
+  learningPreferences: string[] = [],
   lessonTitle: string, 
   lessonDescription: string, 
   duration: number
@@ -139,6 +153,7 @@ export async function generateLessonContent(
   console.log('🤖 OpenAI generateLessonContent called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Learning Preferences:', learningPreferences)
   console.log('  - Lesson:', lessonTitle)
   console.log('  - Duration:', duration, 'minutes')
   
@@ -147,10 +162,22 @@ export async function generateLessonContent(
     normal: "High school level - use clear explanations with some technical terms, practical examples",
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
+
+  // Create learning preferences context for content
+  const preferencesContext = learningPreferences.length > 0 ? `
+Learning style preferences: ${learningPreferences.join(', ')}
+- Adapt the content delivery to match these learning preferences:
+- Visual learners: Use rich, descriptive language that paints mental pictures
+- Auditory learners: Include rhythm, patterns, and memorable phrases
+- Kinesthetic/Hands-on learners: Include step-by-step processes and practical applications
+- Reading/Writing learners: Provide clear structure with main points and sub-points
+- Social learners: Include examples of collaboration and group scenarios
+- Independent learners: Encourage self-reflection and personal application
+` : ''
   
   const prompt = `Create a detailed script for an audio lesson on the topic: "${topic}"
 
-Learning level: ${depthContext[depth as keyof typeof depthContext]}
+Learning level: ${depthContext[depth as keyof typeof depthContext]}${preferencesContext}
 Lesson title: "${lessonTitle}"
 Lesson description: "${lessonDescription}"
 Target duration: ${duration} minutes (approximately ${duration * 150} words)
