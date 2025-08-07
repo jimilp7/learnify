@@ -53,6 +53,7 @@ export default function Home() {
     const requestPayload = {
       topic,
       depth: selectedDepth,
+      learningPreferences,
     }
     console.log('🚀 Starting API call to generate lesson plan with payload:', requestPayload)
     
@@ -118,6 +119,7 @@ export default function Home() {
         body: JSON.stringify({
           topic,
           depth,
+          learningPreferences,
           lessonTitle: lessons[lessonIndex].title,
           lessonDescription: lessons[lessonIndex].description,
           duration: lessons[lessonIndex].duration
