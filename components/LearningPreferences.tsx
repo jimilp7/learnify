@@ -32,7 +32,7 @@ const learningStyleOptions = [
     value: "kinesthetic",
     label: "Hands-on Learner",
     emoji: "🛠️",
-    description: "Learn through practical examples and step-by-step guides",
+    description: "Learn through practical examples and hands-on practice",
     colorClass: "bg-orange-500",
     textColorClass: "text-orange-100"
   },
