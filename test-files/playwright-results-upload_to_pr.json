@@ -1,0 +1,26 @@
+{
+  "summary": "Playwright test results for Learning Preferences feature",
+  "status": "passed",
+  "stats": {
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "duration": 3078.782
+  },
+  "tests": [
+    {
+      "title": "should successfully complete the full learning preferences flow",
+      "status": "passed",
+      "duration": 863,
+      "video": "learning-preferences-flow-upload_to_pr.webm"
+    },
+    {
+      "title": "should allow selecting and deselecting preferences", 
+      "status": "passed",
+      "duration": 847,
+      "video": "preferences-interaction-upload_to_pr.webm"
+    }
+  ],
+  "description": "All Learning Preferences tests passed successfully. Both the main flow (Topic → Preferences → Depth) and the preference selection/deselection functionality work correctly."
+}
