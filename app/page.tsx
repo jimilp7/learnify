@@ -8,6 +8,7 @@ import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
 import GeneratingContent from "@/components/GeneratingContent"
+import ErrorBoundary from "@/components/ErrorBoundary"
 
 type Screen = "topic" | "preferences" | "depth" | "generating" | "plan" | "generatingContent" | "player"
 
@@ -80,9 +81,25 @@ export default function Home() {
       setLessons(data.lessons)
       setCurrentScreen("plan")
       console.log('📱 Screen changed to: plan')
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('💥 Error in handleDepthNext:', err)
-      setError("Failed to generate lesson plan. Please try again.")
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = "Failed to generate lesson plan. Please try again."
+      
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          errorMessage = "Request timed out. Please check your connection and try again."
+        } else if (err.message.includes('fetch')) {
+          errorMessage = "Connection error. Please check your internet connection."
+        } else if (err.message.includes('500')) {
+          errorMessage = "Server error. Please try again in a moment."
+        } else if (err.message.includes('429')) {
+          errorMessage = "Too many requests. Please wait a moment and try again."
+        }
+      }
+      
+      setError(errorMessage)
       setCurrentScreen("depth")
       console.log('📱 Screen reverted to: depth due to error')
     }
@@ -139,9 +156,25 @@ export default function Home() {
       setLessonContent(data.content)
       setCurrentScreen("player")
       console.log('📱 Screen changed to: player')
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('💥 Error generating lesson content:', err)
-      setError("Failed to generate lesson content. Please try again.")
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = "Failed to generate lesson content. Please try again."
+      
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          errorMessage = "Request timed out. Please check your connection and try again."
+        } else if (err.message.includes('fetch')) {
+          errorMessage = "Connection error. Please check your internet connection."
+        } else if (err.message.includes('500')) {
+          errorMessage = "Server error. Please try again in a moment."
+        } else if (err.message.includes('429')) {
+          errorMessage = "Too many requests. Please wait a moment and try again."
+        }
+      }
+      
+      setError(errorMessage)
       setCurrentScreen("plan")
     }
   }
@@ -216,59 +249,80 @@ export default function Home() {
     setError("")
   }
 
+  const handleErrorReset = () => {
+    console.log('🔄 Error boundary reset requested')
+    // Clear error state and return to safe screen
+    setError("")
+    setCurrentScreen("topic")
+  }
+
   return (
     <>
       {currentScreen === "topic" && (
-        <TopicSelection onNext={handleTopicNext} />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <TopicSelection onNext={handleTopicNext} />
+        </ErrorBoundary>
       )}
       {currentScreen === "preferences" && (
-        <LearningPreferences
-          topic={topic}
-          onNext={handlePreferencesNext}
-          onBack={handleBackToTopic}
-        />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <LearningPreferences
+            topic={topic}
+            onNext={handlePreferencesNext}
+            onBack={handleBackToTopic}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "depth" && (
-        <DepthSelection 
-          topic={topic} 
-          onNext={handleDepthNext} 
-          onBack={handleBackToPreferences}
-          error={error}
-        />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <DepthSelection 
+            topic={topic} 
+            onNext={handleDepthNext} 
+            onBack={handleBackToPreferences}
+            error={error}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "generating" && (
-        <GeneratingPlan 
-          topic={topic}
-          depth={depth}
-          onBack={handleBackFromGenerating}
-        />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <GeneratingPlan 
+            topic={topic}
+            depth={depth}
+            onBack={handleBackFromGenerating}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "plan" && (
-        <LessonPlan 
-          topic={topic}
-          depth={depth}
-          lessons={lessons}
-          onStart={handleStart}
-          onBack={handleBackToDepth}
-        />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <LessonPlan 
+            topic={topic}
+            depth={depth}
+            lessons={lessons}
+            onStart={handleStart}
+            onBack={handleBackToDepth}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "generatingContent" && (
-        <GeneratingContent
-          lessonTitle={lessons[currentLessonIndex]?.title || ""}
-          onBack={handleBackFromGeneratingContent}
-        />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <GeneratingContent
+            lessonTitle={lessons[currentLessonIndex]?.title || ""}
+            onBack={handleBackFromGeneratingContent}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "player" && (
-        <LessonContent 
-          lessons={lessons}
-          currentLessonIndex={currentLessonIndex}
-          lessonContent={lessonContent}
-          onBack={handleBackFromPlayer}
-          onNext={handleNextLesson}
-          onPrevious={handlePreviousLesson}
-          onSelectLesson={handleSelectLesson}
-          onStartOver={handleStartOver}
-        />
+        <ErrorBoundary onReset={handleErrorReset}>
+          <LessonContent 
+            lessons={lessons}
+            currentLessonIndex={currentLessonIndex}
+            lessonContent={lessonContent}
+            onBack={handleBackFromPlayer}
+            onNext={handleNextLesson}
+            onPrevious={handlePreviousLesson}
+            onSelectLesson={handleSelectLesson}
+            onStartOver={handleStartOver}
+          />
+        </ErrorBoundary>
       )}
     </>
   )

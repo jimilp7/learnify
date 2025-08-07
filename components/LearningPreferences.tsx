@@ -149,7 +149,7 @@ export default function LearningPreferences({ topic, onNext, onBack }: LearningP
     onSelect 
   }: {
     title: string
-    options: any[]
+    options: Array<{ value: string; label: string; icon?: React.ReactNode; description?: string; colorClass?: string; emoji?: string }>
     selected: string
     onSelect: (value: string) => void
   }) => (

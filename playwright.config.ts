@@ -18,7 +18,7 @@ export default defineConfig({
   // Prevent test directory collisions with unique reporting
   reporter: [
     ['list'],
-    ['html', { outputFolder: './test-files/playwright-report' }]
+    ['html', { outputFolder: './test-files/reports/playwright-report' }]
   ],
   // Configure project-specific settings with unique video directories
   projects: [
