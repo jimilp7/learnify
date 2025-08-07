@@ -12,10 +12,11 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string): Promise<LessonPlanData[]> {
+export async function generateLessonPlan(topic: string, depth: string, learningStyle?: string): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Learning Style:', learningStyle || 'not specified')
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
@@ -23,11 +24,20 @@ export async function generateLessonPlan(topic: string, depth: string): Promise<
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
   
+  const learningStyleContext = {
+    visual: "Focus on examples, step-by-step breakdowns, and clear mental models that help visualize concepts",
+    auditory: "Use detailed explanations, discussions of reasoning, and thorough verbal exploration of ideas",
+    kinesthetic: "Emphasize practical applications, hands-on examples, and actionable step-by-step guides",
+    analytical: "Structure content logically with clear reasoning, systematic breakdowns, and methodical analysis"
+  }
+  
   console.log('📄 Using depth context:', depthContext[depth as keyof typeof depthContext])
+  console.log('🎨 Using learning style context:', learningStyle ? learningStyleContext[learningStyle as keyof typeof learningStyleContext] : 'default approach')
 
   const prompt = `Create a comprehensive audio learning plan for the topic: "${topic}"
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
+${learningStyle ? `Learning style preference: ${learningStyleContext[learningStyle as keyof typeof learningStyleContext]}` : ''}
 
 Generate exactly ${MIN_LESSONS}-${MAX_LESSONS} lessons that build upon each other logically. Each lesson should be ${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes long and designed for audio consumption.
 
@@ -134,13 +144,15 @@ export async function generateLessonContent(
   depth: string, 
   lessonTitle: string, 
   lessonDescription: string, 
-  duration: number
+  duration: number,
+  learningStyle?: string
 ): Promise<string> {
   console.log('🤖 OpenAI generateLessonContent called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
   console.log('  - Lesson:', lessonTitle)
   console.log('  - Duration:', duration, 'minutes')
+  console.log('  - Learning Style:', learningStyle || 'not specified')
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
@@ -148,9 +160,17 @@ export async function generateLessonContent(
     advanced: "PhD/Researcher level - use technical language, advanced concepts, and detailed analysis"
   }
   
+  const learningStyleContext = {
+    visual: "Focus on examples, step-by-step breakdowns, and clear mental models that help visualize concepts",
+    auditory: "Use detailed explanations, discussions of reasoning, and thorough verbal exploration of ideas",
+    kinesthetic: "Emphasize practical applications, hands-on examples, and actionable step-by-step guides",
+    analytical: "Structure content logically with clear reasoning, systematic breakdowns, and methodical analysis"
+  }
+  
   const prompt = `Create a detailed script for an audio lesson on the topic: "${topic}"
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
+${learningStyle ? `Learning style preference: ${learningStyleContext[learningStyle as keyof typeof learningStyleContext]}` : ''}
 Lesson title: "${lessonTitle}"
 Lesson description: "${lessonDescription}"
 Target duration: ${duration} minutes (approximately ${duration * 150} words)
