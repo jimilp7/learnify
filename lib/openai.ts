@@ -12,10 +12,11 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string): Promise<LessonPlanData[]> {
+export async function generateLessonPlan(topic: string, depth: string, preferences?: any): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
+  console.log('  - Preferences:', preferences)
   
   const depthContext = {
     simple: "Explain like I'm 5 years old - use very simple language, basic concepts, and relatable examples",
@@ -25,9 +26,47 @@ export async function generateLessonPlan(topic: string, depth: string): Promise<
   
   console.log('📄 Using depth context:', depthContext[depth as keyof typeof depthContext])
 
+  // Build personalization context based on preferences
+  let personalizationContext = ""
+  if (preferences) {
+    const learningStyleContext = {
+      visual: "Include lessons that describe visual concepts, diagrams, and spatial relationships. Use descriptive imagery to help visualize concepts.",
+      auditory: "Focus on clear verbal explanations, use storytelling, and emphasize listening-based learning techniques.",
+      kinesthetic: "Emphasize practical applications, hands-on examples, and actionable steps the learner can apply immediately."
+    }
+    
+    const paceContext = {
+      slow: "Take time to thoroughly explain each concept. Use repetition and build understanding gradually. Allow for processing time between complex ideas.",
+      normal: "Use a steady, comfortable pace with balanced explanations. Provide good depth without rushing.",
+      fast: "Move efficiently through concepts. Assume quick comprehension and focus on key insights and advanced applications."
+    }
+    
+    const interactivityContext = {
+      high: "Include thought-provoking questions, scenarios for the listener to consider, and encourage active participation.",
+      medium: "Balance explanation with occasional engagement points and reflective questions.",
+      low: "Focus primarily on clear explanation and information delivery with minimal interruption."
+    }
+    
+    const exampleContext = {
+      many: "Provide multiple real-world examples and case studies for each concept to reinforce learning.",
+      some: "Include well-chosen examples that clearly illustrate key concepts.",
+      few: "Focus on conceptual understanding with minimal examples, emphasizing theoretical foundations."
+    }
+
+    personalizationContext = `
+Personalization based on learning preferences:
+- Learning Style: ${learningStyleContext[preferences.learningStyle as keyof typeof learningStyleContext] || "Use balanced approach"}
+- Pace: ${paceContext[preferences.pace as keyof typeof paceContext] || "Use normal pacing"}
+- Interactivity: ${interactivityContext[preferences.interactivity as keyof typeof interactivityContext] || "Use balanced engagement"}  
+- Examples: ${exampleContext[preferences.examples as keyof typeof exampleContext] || "Use balanced examples"}
+
+IMPORTANT: Apply these preferences thoughtfully throughout each lesson while maintaining educational quality and coherence.`
+  }
+
   const prompt = `Create a comprehensive audio learning plan for the topic: "${topic}"
 
 Learning level: ${depthContext[depth as keyof typeof depthContext]}
+${personalizationContext}
 
 Generate exactly ${MIN_LESSONS}-${MAX_LESSONS} lessons that build upon each other logically. Each lesson should be ${Math.floor(MIN_LESSON_LENGTH/60)}-${Math.floor(MAX_LESSON_LENGTH/60)} minutes long and designed for audio consumption.
 

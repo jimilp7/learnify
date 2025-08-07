@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('📋 Request body:', body)
     
-    const { topic, depth } = body
+    const { topic, depth, preferences } = body
 
     if (!topic || !depth) {
       console.error('❌ Missing required fields:', { topic: !!topic, depth: !!depth })
@@ -20,10 +20,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate preferences if provided
+    if (preferences && (typeof preferences !== 'object' || Array.isArray(preferences))) {
+      console.error('❌ Invalid preferences format:', preferences)
+      return NextResponse.json(
+        { error: 'Invalid preferences format' },
+        { status: 400 }
+      )
+    }
+
     console.log('✅ Request validation passed')
     console.log('🔄 Calling generateLessonPlan...')
     
-    const lessons = await generateLessonPlan(topic, depth)
+    const lessons = await generateLessonPlan(topic, depth, preferences)
     
     const endTime = Date.now()
     const duration = endTime - startTime
