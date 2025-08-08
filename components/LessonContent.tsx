@@ -40,6 +40,9 @@ export default function LessonContent({
   const [currentAudioElement, setCurrentAudioElement] = useState<HTMLAudioElement | null>(null)
   const [paragraphs, setParagraphs] = useState<string[]>([])
   const [generatedParagraphCount, setGeneratedParagraphCount] = useState(0)
+  const [audioError, setAudioError] = useState<string>("")
+  const [retryCount, setRetryCount] = useState(0)
+  const [skipAudio, setSkipAudio] = useState(false)
   
   const currentLesson = lessons[currentLessonIndex]
   
@@ -101,9 +104,14 @@ export default function LessonContent({
   
   
   
-  const generateParagraphAudio = useCallback(async (paragraphs: string[]) => {
+  const generateParagraphAudio = useCallback(async (paragraphs: string[], isRetry: boolean = false) => {
     console.log('🎤 Generating audio for', paragraphs.length, 'paragraphs...')
     setIsGeneratingAudio(true)
+    setAudioError("")
+    
+    if (!isRetry) {
+      setRetryCount(0)
+    }
     
     const newAudioUrls: string[] = []
     const newAudioElements: HTMLAudioElement[] = []
@@ -128,65 +136,101 @@ export default function LessonContent({
       for (let i = 0; i < paragraphs.length; i++) {
         console.log(`🎤 Generating audio for paragraph ${i + 1}/${paragraphs.length}`)
         
-        const response = await fetch("/api/generate-lesson-audio", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: paragraphs[i],
-            sampleRate: "22050"
-          }),
-        })
+        let retryAttempt = 0
+        const maxRetries = 3
+        let success = false
         
-        console.log(`📡 Audio API response status for paragraph ${i + 1}:`, response.status)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to generate audio for paragraph ${i + 1}`)
-        }
-        
-        // Get the audio blob
-        const audioBlob = await response.blob()
-        console.log(`✅ Received audio blob for paragraph ${i + 1}:`, audioBlob.size, 'bytes')
-        
-        // Create object URL for the audio
-        const audioUrl = URL.createObjectURL(audioBlob)
-        newAudioUrls.push(audioUrl)
-        
-        // Create audio element
-        const audio = new Audio(audioUrl)
-        
-        // Set up event listeners
-        audio.addEventListener('ended', () => {
-          console.log(`🎵 Audio segment ${i + 1} ended`)
-          playNextSegment()
-        })
-        
-        audio.addEventListener('play', () => {
-          setIsPlaying(true)
-        })
-        
-        audio.addEventListener('pause', () => {
-          setIsPlaying(false)
-        })
-        
-        newAudioElements.push(audio)
-        
-        // Update generated count
-        setGeneratedParagraphCount(i + 1)
-        
-        // For the first audio, set it as current
-        if (i === 0) {
-          setCurrentAudioElement(audio)
-          setCurrentAudioIndex(0) // Ensure first paragraph is highlighted
-          
-          audio.addEventListener('loadedmetadata', () => {
-            console.log('🎵 First audio loaded, duration:', audio.duration, 'seconds')
-          })
-          
-          // Continue generating remaining audio in background
-          if (paragraphs.length > 1) {
-            setIsGeneratingAudio(false) // Hide generating status after first audio
+        while (!success && retryAttempt < maxRetries) {
+          try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+            
+            const response = await fetch("/api/generate-lesson-audio", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                text: paragraphs[i],
+                sampleRate: "22050"
+              }),
+              signal: controller.signal
+            })
+            
+            clearTimeout(timeoutId)
+            console.log(`📡 Audio API response status for paragraph ${i + 1}:`, response.status)
+            
+            if (!response.ok) {
+              throw new Error(`Audio generation failed with status ${response.status}`)
+            }
+            
+            // Get the audio blob
+            const audioBlob = await response.blob()
+            
+            if (audioBlob.size === 0) {
+              throw new Error('Empty audio blob received')
+            }
+            
+            console.log(`✅ Received audio blob for paragraph ${i + 1}:`, audioBlob.size, 'bytes')
+            
+            // Create object URL for the audio
+            const audioUrl = URL.createObjectURL(audioBlob)
+            newAudioUrls.push(audioUrl)
+            
+            // Create audio element
+            const audio = new Audio(audioUrl)
+            
+            // Set up event listeners with error handling
+            audio.addEventListener('ended', () => {
+              console.log(`🎵 Audio segment ${i + 1} ended`)
+              playNextSegment()
+            })
+            
+            audio.addEventListener('play', () => {
+              setIsPlaying(true)
+            })
+            
+            audio.addEventListener('pause', () => {
+              setIsPlaying(false)
+            })
+            
+            audio.addEventListener('error', (e) => {
+              console.error(`🔴 Audio playback error for segment ${i + 1}:`, e)
+              setAudioError(`Audio playback failed for segment ${i + 1}`)
+            })
+            
+            newAudioElements.push(audio)
+            success = true
+            
+            // Update generated count
+            setGeneratedParagraphCount(i + 1)
+            
+            // For the first audio, set it as current
+            if (i === 0) {
+              setCurrentAudioElement(audio)
+              setCurrentAudioIndex(0)
+              
+              audio.addEventListener('loadedmetadata', () => {
+                console.log('🎵 First audio loaded, duration:', audio.duration, 'seconds')
+              })
+              
+              // Continue generating remaining audio in background
+              if (paragraphs.length > 1) {
+                setIsGeneratingAudio(false)
+              }
+            }
+            
+          } catch (fetchError: unknown) {
+            retryAttempt++
+            console.warn(`⚠️ Attempt ${retryAttempt}/${maxRetries} failed for paragraph ${i + 1}:`, (fetchError as Error).message)
+            
+            if (retryAttempt < maxRetries) {
+              // Wait before retry with exponential backoff
+              await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryAttempt) * 1000))
+            } else {
+              // All retries failed, throw error
+              throw new Error(`Failed to generate audio after ${maxRetries} attempts: ${(fetchError as Error).message}`)
+            }
           }
         }
       }
@@ -197,16 +241,34 @@ export default function LessonContent({
       
       console.log('✅ All paragraph audio generated successfully')
       setIsGeneratingAudio(false)
+      setAudioError("")
       
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('💥 Error generating paragraph audio:', err)
       setIsGeneratingAudio(false)
+      setAudioError((err as Error).message || 'Audio generation failed')
     }
   }, [])
   
+  const handleRetryAudio = () => {
+    console.log('🔄 Retrying audio generation...')
+    setRetryCount(prev => prev + 1)
+    if (paragraphs.length > 0) {
+      generateParagraphAudio(paragraphs, true)
+    }
+  }
+  
+  const handleSkipAudio = () => {
+    console.log('⏭️ Skipping audio generation...')
+    setSkipAudio(true)
+    setIsGeneratingAudio(false)
+    setAudioError("")
+    // Set all paragraphs as "generated" for visual purposes
+    setGeneratedParagraphCount(paragraphs.length)
+  }
   
   useEffect(() => {
-    if (currentLesson && lessonContent) {
+    if (currentLesson && lessonContent && !skipAudio) {
       // Clean up previous audio
       if (currentAudioElement) {
         currentAudioElement.pause()
@@ -221,6 +283,8 @@ export default function LessonContent({
       setIsPlaying(false)
       setGeneratedParagraphCount(0)
       setIsGeneratingAudio(true)
+      setAudioError("")
+      setSkipAudio(false)
       
       // Split content into paragraphs and start generating audio
       const contentParagraphs = lessonContent
@@ -233,6 +297,16 @@ export default function LessonContent({
       
       // Start generating audio for all paragraphs
       generateParagraphAudio(contentParagraphs)
+    } else if (currentLesson && lessonContent && skipAudio) {
+      // Just display content without audio
+      const contentParagraphs = lessonContent
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+      
+      setParagraphs(contentParagraphs)
+      setGeneratedParagraphCount(contentParagraphs.length)
+      setIsGeneratingAudio(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLessonIndex, lessonContent, currentLesson, generateParagraphAudio])
@@ -280,9 +354,57 @@ export default function LessonContent({
           </div>
           
           {/* Generating Audio Status */}
-          {isGeneratingAudio && (
+          {isGeneratingAudio && !audioError && (
             <div className="flex items-center justify-center py-2">
               <span className="text-sm text-gray-500">Generating audio...</span>
+            </div>
+          )}
+          
+          {/* Audio Error State */}
+          {audioError && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800 mb-1">
+                    Audio Generation Failed
+                  </h3>
+                  <p className="text-sm text-red-700 mb-3">
+                    {audioError}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={handleRetryAudio}
+                      className="flex-1 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                      disabled={isGeneratingAudio}
+                    >
+                      {isGeneratingAudio ? 'Retrying...' : `Try Again ${retryCount > 0 ? `(${retryCount + 1})` : ''}`}
+                    </button>
+                    <button
+                      onClick={handleSkipAudio}
+                      className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Continue Reading
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Skip Audio Notice */}
+          {skipAudio && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                </div>
+                <p className="text-sm text-blue-700">
+                  Reading mode - Audio playback is disabled for this lesson.
+                </p>
+              </div>
             </div>
           )}
           

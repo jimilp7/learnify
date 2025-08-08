@@ -12,7 +12,14 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string, preferences?: any): Promise<LessonPlanData[]> {
+interface LearningPreferences {
+  learningStyle: string
+  pace: string
+  interactivity: string
+  examples: string
+}
+
+export async function generateLessonPlan(topic: string, depth: string, preferences?: LearningPreferences): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
@@ -100,7 +107,7 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
   
   try {
     const requestConfig = {
-      model: "o3-mini",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -120,8 +127,20 @@ The lesson sequence should feel like a guided journey from "I've never heard of 
       messages_count: requestConfig.messages.length
     })
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const completion = await openai.chat.completions.create(requestConfig as any)
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system" as const,
+          content: "You are an expert educational content creator. Generate engaging, well-structured lesson plans that build knowledge progressively."
+        },
+        {
+          role: "user" as const,
+          content: prompt
+        }
+      ],
+      max_completion_tokens: requestConfig.max_completion_tokens
+    })
 
     console.log('✅ OpenAI API call completed successfully')
     console.log('📊 Usage stats:', {
@@ -223,7 +242,7 @@ Just write the exact words that should be spoken to the listener, as if you are 
   
   try {
     const requestConfig = {
-      model: "o3-mini",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -243,8 +262,20 @@ Just write the exact words that should be spoken to the listener, as if you are 
       messages_count: requestConfig.messages.length
     })
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const completion = await openai.chat.completions.create(requestConfig as any)
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system" as const,
+          content: "You are an expert educational content creator specializing in audio learning. Create engaging, conversational content perfect for listening."
+        },
+        {
+          role: "user" as const,
+          content: prompt
+        }
+      ],
+      max_completion_tokens: requestConfig.max_completion_tokens
+    })
 
     console.log('✅ OpenAI content API call completed successfully')
     console.log('📊 Usage stats:', {

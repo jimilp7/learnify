@@ -8,6 +8,7 @@ import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
 import GeneratingContent from "@/components/GeneratingContent"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 
 type Screen = "topic" | "preferences" | "depth" | "generating" | "plan" | "generatingContent" | "player"
 
@@ -57,34 +58,73 @@ export default function Home() {
     }
     console.log('🚀 Starting API call to generate lesson plan with payload:', requestPayload)
     
-    try {
-      const response = await fetch("/api/generate-plan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestPayload),
-      })
-      
-      console.log('📡 API response status:', response.status, response.statusText)
-      
-      if (!response.ok) {
-        console.error('❌ API request failed with status:', response.status)
-        throw new Error("Failed to generate lesson plan")
+    let retryCount = 0
+    const maxRetries = 2
+    
+    while (retryCount <= maxRetries) {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 45000) // 45 second timeout
+        
+        const response = await fetch("/api/generate-plan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestPayload),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        console.log('📡 API response status:', response.status, response.statusText)
+        
+        if (!response.ok) {
+          console.error('❌ API request failed with status:', response.status)
+          
+          // Handle specific error status codes
+          if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please wait a moment and try again.")
+          } else if (response.status >= 500) {
+            throw new Error("Server error. Please try again in a moment.")
+          } else if (response.status === 401) {
+            throw new Error("Authentication failed. Please check your API configuration.")
+          } else {
+            throw new Error(`Failed to generate lesson plan (Error ${response.status})`)
+          }
+        }
+        
+        const data = await response.json()
+        console.log('✅ Received lesson plan data:', data)
+        console.log('📚 Number of lessons generated:', data.lessons?.length || 0)
+        
+        if (!data.lessons || data.lessons.length === 0) {
+          throw new Error("No lessons were generated. Please try a different topic or approach.")
+        }
+        
+        setLessons(data.lessons)
+        setCurrentScreen("plan")
+        console.log('📱 Screen changed to: plan')
+        return // Success, exit retry loop
+        
+      } catch (err: unknown) {
+        console.error('💥 Error in handleDepthNext:', err)
+        retryCount++
+        
+        if (retryCount <= maxRetries) {
+          console.log(`🔄 Retrying API call... (${retryCount}/${maxRetries})`)
+          // Wait before retry with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000))
+        } else {
+          // All retries exhausted
+          const errorMessage = (err as Error).name === 'AbortError' 
+            ? "Request timed out. Please check your internet connection and try again."
+            : (err as Error).message || "Failed to generate lesson plan. Please try again."
+          
+          setError(errorMessage)
+          setCurrentScreen("depth")
+          console.log('📱 Screen reverted to: depth due to error')
+        }
       }
-      
-      const data = await response.json()
-      console.log('✅ Received lesson plan data:', data)
-      console.log('📚 Number of lessons generated:', data.lessons?.length || 0)
-      
-      setLessons(data.lessons)
-      setCurrentScreen("plan")
-      console.log('📱 Screen changed to: plan')
-    } catch (err) {
-      console.error('💥 Error in handleDepthNext:', err)
-      setError("Failed to generate lesson plan. Please try again.")
-      setCurrentScreen("depth")
-      console.log('📱 Screen reverted to: depth due to error')
     }
   }
 
@@ -110,39 +150,76 @@ export default function Home() {
     setCurrentScreen("generatingContent")
     console.log('📱 Screen changed to: generatingContent')
     
-    try {
-      const response = await fetch("/api/generate-content", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          topic,
-          depth,
-          lessonTitle: lessons[lessonIndex].title,
-          lessonDescription: lessons[lessonIndex].description,
-          duration: lessons[lessonIndex].duration
-        }),
-      })
-      
-      console.log('📡 Content API response status:', response.status)
-      
-      if (!response.ok) {
-        throw new Error("Failed to generate lesson content")
+    let retryCount = 0
+    const maxRetries = 2
+    
+    while (retryCount <= maxRetries) {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 45000) // 45 second timeout
+        
+        const response = await fetch("/api/generate-content", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            topic,
+            depth,
+            lessonTitle: lessons[lessonIndex].title,
+            lessonDescription: lessons[lessonIndex].description,
+            duration: lessons[lessonIndex].duration
+          }),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        console.log('📡 Content API response status:', response.status)
+        
+        if (!response.ok) {
+          if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please wait a moment and try again.")
+          } else if (response.status >= 500) {
+            throw new Error("Server error. Please try again in a moment.")
+          } else if (response.status === 401) {
+            throw new Error("Authentication failed. Please check your API configuration.")
+          } else {
+            throw new Error(`Failed to generate lesson content (Error ${response.status})`)
+          }
+        }
+        
+        const data = await response.json()
+        console.log('✅ Received lesson content for lesson', lessonIndex)
+        
+        if (!data.content || data.content.trim().length === 0) {
+          throw new Error("Empty lesson content received. Please try again.")
+        }
+        
+        // Cache the content
+        setLessonContents(prev => ({ ...prev, [lessonIndex]: data.content }))
+        setLessonContent(data.content)
+        setCurrentScreen("player")
+        console.log('📱 Screen changed to: player')
+        return // Success, exit retry loop
+        
+      } catch (err: unknown) {
+        console.error('💥 Error generating lesson content:', err)
+        retryCount++
+        
+        if (retryCount <= maxRetries) {
+          console.log(`🔄 Retrying content generation... (${retryCount}/${maxRetries})`)
+          // Wait before retry with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000))
+        } else {
+          // All retries exhausted
+          const errorMessage = (err as Error).name === 'AbortError' 
+            ? "Request timed out. Please check your internet connection and try again."
+            : (err as Error).message || "Failed to generate lesson content. Please try again."
+          
+          setError(errorMessage)
+          setCurrentScreen("plan")
+        }
       }
-      
-      const data = await response.json()
-      console.log('✅ Received lesson content for lesson', lessonIndex)
-      
-      // Cache the content
-      setLessonContents(prev => ({ ...prev, [lessonIndex]: data.content }))
-      setLessonContent(data.content)
-      setCurrentScreen("player")
-      console.log('📱 Screen changed to: player')
-    } catch (err) {
-      console.error('💥 Error generating lesson content:', err)
-      setError("Failed to generate lesson content. Please try again.")
-      setCurrentScreen("plan")
     }
   }
 
@@ -219,56 +296,79 @@ export default function Home() {
   return (
     <>
       {currentScreen === "topic" && (
-        <TopicSelection onNext={handleTopicNext} />
+        <ErrorBoundary onReset={handleStartOver}>
+          <TopicSelection onNext={handleTopicNext} />
+        </ErrorBoundary>
       )}
       {currentScreen === "preferences" && (
-        <LearningPreferences
-          topic={topic}
-          onNext={handlePreferencesNext}
-          onBack={handleBackToTopic}
-        />
+        <ErrorBoundary onReset={handleStartOver}>
+          <LearningPreferences
+            topic={topic}
+            onNext={handlePreferencesNext}
+            onBack={handleBackToTopic}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "depth" && (
-        <DepthSelection 
-          topic={topic} 
-          onNext={handleDepthNext} 
-          onBack={handleBackToPreferences}
-          error={error}
-        />
+        <ErrorBoundary onReset={handleStartOver}>
+          <DepthSelection 
+            topic={topic} 
+            onNext={handleDepthNext} 
+            onBack={handleBackToPreferences}
+            error={error}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "generating" && (
-        <GeneratingPlan 
-          topic={topic}
-          depth={depth}
-          onBack={handleBackFromGenerating}
-        />
+        <ErrorBoundary 
+          onReset={handleStartOver}
+          onRetry={() => setCurrentScreen("depth")}
+        >
+          <GeneratingPlan 
+            topic={topic}
+            depth={depth}
+            onBack={handleBackFromGenerating}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "plan" && (
-        <LessonPlan 
-          topic={topic}
-          depth={depth}
-          lessons={lessons}
-          onStart={handleStart}
-          onBack={handleBackToDepth}
-        />
+        <ErrorBoundary onReset={handleStartOver}>
+          <LessonPlan 
+            topic={topic}
+            depth={depth}
+            lessons={lessons}
+            onStart={handleStart}
+            onBack={handleBackToDepth}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "generatingContent" && (
-        <GeneratingContent
-          lessonTitle={lessons[currentLessonIndex]?.title || ""}
-          onBack={handleBackFromGeneratingContent}
-        />
+        <ErrorBoundary 
+          onReset={handleStartOver}
+          onRetry={() => setCurrentScreen("plan")}
+        >
+          <GeneratingContent
+            lessonTitle={lessons[currentLessonIndex]?.title || ""}
+            onBack={handleBackFromGeneratingContent}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "player" && (
-        <LessonContent 
-          lessons={lessons}
-          currentLessonIndex={currentLessonIndex}
-          lessonContent={lessonContent}
-          onBack={handleBackFromPlayer}
-          onNext={handleNextLesson}
-          onPrevious={handlePreviousLesson}
-          onSelectLesson={handleSelectLesson}
-          onStartOver={handleStartOver}
-        />
+        <ErrorBoundary 
+          onReset={handleStartOver}
+          onRetry={() => setCurrentScreen("plan")}
+        >
+          <LessonContent 
+            lessons={lessons}
+            currentLessonIndex={currentLessonIndex}
+            lessonContent={lessonContent}
+            onBack={handleBackFromPlayer}
+            onNext={handleNextLesson}
+            onPrevious={handlePreviousLesson}
+            onSelectLesson={handleSelectLesson}
+            onStartOver={handleStartOver}
+          />
+        </ErrorBoundary>
       )}
     </>
   )
