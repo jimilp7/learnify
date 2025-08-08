@@ -20,6 +20,8 @@ interface LessonContentProps {
   onPrevious: () => void
   onSelectLesson?: (index: number) => void
   onStartOver: () => void
+  audioCache?: Map<string, string[]>
+  setAudioCache?: (cache: Map<string, string[]>) => void
 }
 
 export default function LessonContent({ 
@@ -30,7 +32,9 @@ export default function LessonContent({
   onNext,
   onPrevious,
   onSelectLesson,
-  onStartOver
+  onStartOver,
+  audioCache = new Map(),
+  setAudioCache
 }: LessonContentProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(true)
@@ -40,6 +44,8 @@ export default function LessonContent({
   const [currentAudioElement, setCurrentAudioElement] = useState<HTMLAudioElement | null>(null)
   const [paragraphs, setParagraphs] = useState<string[]>([])
   const [generatedParagraphCount, setGeneratedParagraphCount] = useState(0)
+  const [paragraphGenerationStatus, setParagraphGenerationStatus] = useState<('pending' | 'generating' | 'completed' | 'error')[]>([])
+  const [isGeneratingInBackground, setIsGeneratingInBackground] = useState(false)
   
   const currentLesson = lessons[currentLessonIndex]
   
@@ -101,108 +107,199 @@ export default function LessonContent({
   
   
   
-  const generateParagraphAudio = useCallback(async (paragraphs: string[]) => {
-    console.log('🎤 Generating audio for', paragraphs.length, 'paragraphs...')
-    setIsGeneratingAudio(true)
-    
-    const newAudioUrls: string[] = []
-    const newAudioElements: HTMLAudioElement[] = []
-    let currentPlayingIndex = 0
-    
-    const playNextSegment = () => {
-      currentPlayingIndex++
-      if (currentPlayingIndex < newAudioElements.length) {
-        console.log(`🎵 Playing audio segment ${currentPlayingIndex + 1}/${newAudioElements.length}`)
-        setCurrentAudioIndex(currentPlayingIndex)
-        setCurrentAudioElement(newAudioElements[currentPlayingIndex])
-        newAudioElements[currentPlayingIndex].play().catch(err => {
-          console.error('⚠️ Failed to play next audio:', err)
-        })
-      } else {
-        console.log('🎵 All audio segments completed')
-        setIsPlaying(false)
-      }
-    }
-    
+  const generateSingleParagraphAudio = useCallback(async (text: string, index: number): Promise<string | null> => {
     try {
-      for (let i = 0; i < paragraphs.length; i++) {
-        console.log(`🎤 Generating audio for paragraph ${i + 1}/${paragraphs.length}`)
-        
-        const response = await fetch("/api/generate-lesson-audio", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: paragraphs[i],
-            sampleRate: "22050"
-          }),
-        })
-        
-        console.log(`📡 Audio API response status for paragraph ${i + 1}:`, response.status)
-        
-        if (!response.ok) {
-          throw new Error(`Failed to generate audio for paragraph ${i + 1}`)
-        }
-        
-        // Get the audio blob
-        const audioBlob = await response.blob()
-        console.log(`✅ Received audio blob for paragraph ${i + 1}:`, audioBlob.size, 'bytes')
-        
-        // Create object URL for the audio
-        const audioUrl = URL.createObjectURL(audioBlob)
-        newAudioUrls.push(audioUrl)
-        
-        // Create audio element
-        const audio = new Audio(audioUrl)
-        
-        // Set up event listeners
-        audio.addEventListener('ended', () => {
-          console.log(`🎵 Audio segment ${i + 1} ended`)
-          playNextSegment()
-        })
-        
-        audio.addEventListener('play', () => {
-          setIsPlaying(true)
-        })
-        
-        audio.addEventListener('pause', () => {
-          setIsPlaying(false)
-        })
-        
-        newAudioElements.push(audio)
-        
-        // Update generated count
-        setGeneratedParagraphCount(i + 1)
-        
-        // For the first audio, set it as current
-        if (i === 0) {
-          setCurrentAudioElement(audio)
-          setCurrentAudioIndex(0) // Ensure first paragraph is highlighted
-          
-          audio.addEventListener('loadedmetadata', () => {
-            console.log('🎵 First audio loaded, duration:', audio.duration, 'seconds')
-          })
-          
-          // Continue generating remaining audio in background
-          if (paragraphs.length > 1) {
-            setIsGeneratingAudio(false) // Hide generating status after first audio
-          }
-        }
+      console.log(`🎤 Generating audio for paragraph ${index + 1}...`)
+      
+      const response = await fetch("/api/generate-lesson-audio", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: text,
+          sampleRate: "22050"
+        }),
+      })
+      
+      console.log(`📡 Audio API response status for paragraph ${index + 1}:`, response.status)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to generate audio for paragraph ${index + 1}`)
       }
       
-      // Update state with all generated audio
-      setAudioUrls(newAudioUrls)
-      setAudioElements(newAudioElements)
+      const audioBlob = await response.blob()
+      console.log(`✅ Received audio blob for paragraph ${index + 1}:`, audioBlob.size, 'bytes')
       
-      console.log('✅ All paragraph audio generated successfully')
-      setIsGeneratingAudio(false)
+      const audioUrl = URL.createObjectURL(audioBlob)
+      return audioUrl
       
     } catch (err) {
-      console.error('💥 Error generating paragraph audio:', err)
-      setIsGeneratingAudio(false)
+      console.error(`💥 Error generating audio for paragraph ${index + 1}:`, err)
+      return null
     }
   }, [])
+  
+  const generateProgressiveAudio = useCallback(async (paragraphs: string[]) => {
+    console.log('🎤 Starting progressive audio generation for', paragraphs.length, 'paragraphs...')
+    
+    const cacheKey = `${currentLessonIndex}-${lessonContent?.slice(0, 100)}` // Use lesson index and content snippet as cache key
+    
+    const newAudioUrls: string[] = new Array(paragraphs.length)
+    const newAudioElements: HTMLAudioElement[] = new Array(paragraphs.length)
+    let currentPlayingIndex = 0
+    
+    const playNextSegment = (fromIndex: number) => {
+      if (fromIndex === currentPlayingIndex) {
+        currentPlayingIndex++
+        if (currentPlayingIndex < newAudioElements.length && newAudioElements[currentPlayingIndex]) {
+          console.log(`🎵 Playing audio segment ${currentPlayingIndex + 1}/${paragraphs.length}`)
+          setCurrentAudioIndex(currentPlayingIndex)
+          setCurrentAudioElement(newAudioElements[currentPlayingIndex])
+          newAudioElements[currentPlayingIndex].play().catch(err => {
+            console.error('⚠️ Failed to play next audio:', err)
+          })
+        } else {
+          console.log('🎵 All available audio segments completed')
+          setIsPlaying(false)
+        }
+      }
+    }
+    
+    // Check if audio is already cached
+    if (audioCache.has(cacheKey)) {
+      console.log('📦 Loading audio from cache')
+      const cachedUrls = audioCache.get(cacheKey)!
+      cachedUrls.forEach((url, index) => {
+        if (url) {
+          newAudioUrls[index] = url
+          const audio = new Audio(url)
+          audio.addEventListener('ended', () => playNextSegment(index))
+          audio.addEventListener('play', () => setIsPlaying(true))
+          audio.addEventListener('pause', () => setIsPlaying(false))
+          newAudioElements[index] = audio
+        }
+      })
+      
+      setAudioUrls(newAudioUrls.filter(url => url))
+      setAudioElements(newAudioElements.filter(element => element))
+      setCurrentAudioElement(newAudioElements[0])
+      setCurrentAudioIndex(0)
+      setGeneratedParagraphCount(paragraphs.length)
+      setParagraphGenerationStatus(new Array(paragraphs.length).fill('completed'))
+      setIsGeneratingAudio(false)
+      return
+    }
+    
+    // Initialize generation status
+    const initialStatus: ('pending' | 'generating' | 'completed' | 'error')[] = new Array(paragraphs.length).fill('pending')
+    initialStatus[0] = 'generating' // First paragraph is generating
+    setParagraphGenerationStatus(initialStatus)
+    
+    try {
+      // Generate first paragraph audio immediately
+      setIsGeneratingAudio(true)
+      const firstAudioUrl = await generateSingleParagraphAudio(paragraphs[0], 0)
+      
+      if (firstAudioUrl) {
+        newAudioUrls[0] = firstAudioUrl
+        const firstAudio = new Audio(firstAudioUrl)
+        
+        firstAudio.addEventListener('ended', () => {
+          console.log('🎵 First audio segment ended')
+          playNextSegment(0)
+        })
+        
+        firstAudio.addEventListener('play', () => setIsPlaying(true))
+        firstAudio.addEventListener('pause', () => setIsPlaying(false))
+        
+        newAudioElements[0] = firstAudio
+        setCurrentAudioElement(firstAudio)
+        setCurrentAudioIndex(0)
+        setGeneratedParagraphCount(1)
+        
+        // Update first paragraph status
+        const updatedStatus = [...initialStatus]
+        updatedStatus[0] = 'completed'
+        setParagraphGenerationStatus(updatedStatus)
+        
+        console.log('✅ First paragraph audio ready, allowing user to start listening')
+        setIsGeneratingAudio(false)
+        
+        // Start generating remaining paragraphs in background
+        if (paragraphs.length > 1) {
+          setIsGeneratingInBackground(true)
+          
+          // Generate remaining paragraphs in background
+          for (let i = 1; i < paragraphs.length; i++) {
+            // Update status to generating
+            setParagraphGenerationStatus(prev => {
+              const updated = [...prev]
+              updated[i] = 'generating'
+              return updated
+            })
+            
+            const audioUrl = await generateSingleParagraphAudio(paragraphs[i], i)
+            
+            if (audioUrl) {
+              newAudioUrls[i] = audioUrl
+              const audio = new Audio(audioUrl)
+              
+              audio.addEventListener('ended', () => {
+                console.log(`🎵 Audio segment ${i + 1} ended`)
+                playNextSegment(i)
+              })
+              
+              audio.addEventListener('play', () => setIsPlaying(true))
+              audio.addEventListener('pause', () => setIsPlaying(false))
+              
+              newAudioElements[i] = audio
+              
+              // Update generated count and status
+              setGeneratedParagraphCount(i + 1)
+              setParagraphGenerationStatus(prev => {
+                const updated = [...prev]
+                updated[i] = 'completed'
+                return updated
+              })
+              
+              console.log(`✅ Background generation completed for paragraph ${i + 1}`)
+            } else {
+              // Mark as error
+              setParagraphGenerationStatus(prev => {
+                const updated = [...prev]
+                updated[i] = 'error'
+                return updated
+              })
+            }
+          }
+          
+          // Cache the complete audio URLs
+          if (setAudioCache) {
+            const newCache = new Map(audioCache)
+            newCache.set(cacheKey, newAudioUrls.filter(url => url !== undefined))
+            setAudioCache(newCache)
+          }
+          
+          setIsGeneratingInBackground(false)
+          console.log('✅ All background audio generation completed')
+        }
+        
+        // Update final state
+        setAudioUrls(newAudioUrls.filter(url => url !== undefined))
+        setAudioElements(newAudioElements.filter(element => element !== undefined))
+        
+      } else {
+        throw new Error('Failed to generate first paragraph audio')
+      }
+      
+    } catch (err) {
+      console.error('💥 Error in progressive audio generation:', err)
+      setIsGeneratingAudio(false)
+      setIsGeneratingInBackground(false)
+      setParagraphGenerationStatus(prev => prev.map(() => 'error'))
+    }
+  }, [audioCache, setAudioCache, currentLessonIndex, lessonContent, generateSingleParagraphAudio])
   
   
   useEffect(() => {
@@ -231,11 +328,11 @@ export default function LessonContent({
       console.log('📝 Split content into', contentParagraphs.length, 'paragraphs')
       setParagraphs(contentParagraphs)
       
-      // Start generating audio for all paragraphs
-      generateParagraphAudio(contentParagraphs)
+      // Start progressive audio generation
+      generateProgressiveAudio(contentParagraphs)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLessonIndex, lessonContent, currentLesson, generateParagraphAudio])
+  }, [currentLessonIndex, lessonContent, currentLesson, generateProgressiveAudio])
   
   // Cleanup audio URLs when component unmounts or lesson changes
   useEffect(() => {
@@ -279,10 +376,22 @@ export default function LessonContent({
             </p>
           </div>
           
-          {/* Generating Audio Status */}
+          {/* Audio Generation Status */}
           {isGeneratingAudio && (
             <div className="flex items-center justify-center py-2">
-              <span className="text-sm text-gray-500">Generating audio...</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-500">Preparing first audio...</span>
+              </div>
+            </div>
+          )}
+          
+          {isGeneratingInBackground && (
+            <div className="flex items-center justify-center py-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs text-gray-400">Generating remaining audio in background...</span>
+              </div>
             </div>
           )}
           
@@ -290,20 +399,71 @@ export default function LessonContent({
           <div className="-mt-2">
             <div className="rounded-2xl p-6">
               <div className="prose prose-sm max-w-none">
-                {paragraphs.map((paragraph, index) => (
-                  <p 
-                    key={index} 
-                    className={`mb-4 leading-relaxed transition-all duration-300 ${
-                      index === currentAudioIndex && isPlaying
-                        ? 'text-gray-900 font-medium bg-blue-50 -mx-3 px-3 py-2 rounded-lg'
-                        : index < generatedParagraphCount
-                        ? 'text-gray-700'
-                        : 'text-gray-400'
-                    }`}
-                  >
-                    {paragraph}
-                  </p>
-                ))}
+                {paragraphs.map((paragraph, index) => {
+                  const status = paragraphGenerationStatus[index] || 'pending'
+                  const isCurrentlyPlaying = index === currentAudioIndex && isPlaying
+                  const isReady = status === 'completed'
+                  const isGenerating = status === 'generating'
+                  const hasError = status === 'error'
+                  
+                  return (
+                    <div key={index} className="mb-4 relative">
+                      {/* Audio Generation Status Indicator */}
+                      <div className="flex items-center mb-2">
+                        <div className="flex items-center space-x-2 text-xs">
+                          {isGenerating && (
+                            <>
+                              <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                              <span className="text-blue-600">Generating audio...</span>
+                            </>
+                          )}
+                          {isReady && (
+                            <>
+                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                              <span className="text-green-600">Audio ready</span>
+                            </>
+                          )}
+                          {hasError && (
+                            <>
+                              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                              <span className="text-red-600">Audio generation failed</span>
+                            </>
+                          )}
+                          {status === 'pending' && index > 0 && (
+                            <>
+                              <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                              <span className="text-gray-500">Waiting...</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Paragraph Content */}
+                      <p className={`leading-relaxed transition-all duration-300 ${
+                        isCurrentlyPlaying
+                          ? 'text-gray-900 font-medium bg-blue-50 -mx-3 px-3 py-2 rounded-lg border-l-4 border-blue-500'
+                          : isReady
+                          ? 'text-gray-700'
+                          : isGenerating
+                          ? 'text-gray-500 animate-pulse'
+                          : hasError
+                          ? 'text-red-400'
+                          : 'text-gray-400'
+                      }`}>
+                        {isGenerating && index > 0 ? (
+                          // Skeleton loader for generating paragraphs
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-4/5"></div>
+                          </div>
+                        ) : (
+                          paragraph
+                        )}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -319,7 +479,7 @@ export default function LessonContent({
         onStartOver={handleStartOver}
         canGoPrev={currentLessonIndex > 0}
         canGoNext={currentLessonIndex < lessons.length - 1}
-        hasAudio={!!currentAudioElement}
+        hasAudio={!!currentAudioElement && !isGeneratingAudio}
         lessons={lessons}
         currentLessonIndex={currentLessonIndex}
         onSelectLesson={onSelectLesson}

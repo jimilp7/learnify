@@ -28,6 +28,7 @@ export default function Home() {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
   const [lessonContent, setLessonContent] = useState<string>("")
   const [lessonContents, setLessonContents] = useState<Record<number, string>>({})
+  const [audioCache, setAudioCache] = useState<Map<string, string[]>>(new Map())
 
   const handleTopicNext = (selectedTopic: string) => {
     console.log('🎯 Topic selected:', selectedTopic)
@@ -214,6 +215,7 @@ export default function Home() {
     setLessonContents({})
     setCurrentLessonIndex(0)
     setError("")
+    setAudioCache(new Map()) // Clear audio cache when starting over
   }
 
   return (
@@ -268,6 +270,8 @@ export default function Home() {
           onPrevious={handlePreviousLesson}
           onSelectLesson={handleSelectLesson}
           onStartOver={handleStartOver}
+          audioCache={audioCache}
+          setAudioCache={setAudioCache}
         />
       )}
     </>
