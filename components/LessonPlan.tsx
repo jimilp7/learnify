@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, PlayCircle, Clock, ChevronDown, ChevronUp } from "lucide-react"
 
@@ -19,19 +19,83 @@ interface LessonPlanProps {
   onBack: () => void
 }
 
+interface LessonItemProps {
+  lesson: Lesson
+  index: number
+  isExpanded: boolean
+  onToggle: (id: string) => void
+}
+
+// Memoized lesson item component to prevent unnecessary re-renders
+const LessonItem = memo(function LessonItem({ lesson, index, isExpanded, onToggle }: LessonItemProps) {
+  const handleToggle = useCallback(() => {
+    onToggle(lesson.id)
+  }, [lesson.id, onToggle])
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('LessonItem rendered', { id: lesson.id, index, isExpanded })
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      className="w-full text-left p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-all"
+    >
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold shrink-0">
+          {index + 1}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-medium text-lg">{lesson.title}</div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-gray-500 text-sm">{lesson.duration}m</span>
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              )}
+            </div>
+          </div>
+          <div className={`text-sm text-gray-600 mt-1 ${!isExpanded ? 'line-clamp-2' : ''}`}>
+            {lesson.description}
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+})
+
 
 export default function LessonPlan({ topic, lessons, onStart, onBack }: LessonPlanProps) {
-  const totalDuration = lessons.reduce((sum, lesson) => sum + lesson.duration, 0)
+  // Memoize expensive calculation to prevent recalculation on every render
+  const totalDuration = useMemo(() => 
+    lessons.reduce((sum, lesson) => sum + lesson.duration, 0),
+    [lessons]
+  )
+  
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set())
 
-  const toggleLesson = (lessonId: string) => {
-    const newExpanded = new Set(expandedLessons)
-    if (newExpanded.has(lessonId)) {
-      newExpanded.delete(lessonId)
-    } else {
-      newExpanded.add(lessonId)
-    }
-    setExpandedLessons(newExpanded)
+  // Memoize callback function to prevent creating new function on every render
+  const toggleLesson = useCallback((lessonId: string) => {
+    setExpandedLessons(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(lessonId)) {
+        newExpanded.delete(lessonId)
+      } else {
+        newExpanded.add(lessonId)
+      }
+      return newExpanded
+    })
+  }, [])
+  
+  // Performance monitoring in development  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('LessonPlan rendered', { 
+      lessonsCount: lessons.length, 
+      expandedCount: expandedLessons.size,
+      totalDuration 
+    })
   }
 
   return (
@@ -59,33 +123,13 @@ export default function LessonPlan({ topic, lessons, onStart, onBack }: LessonPl
           {lessons.map((lesson, index) => {
             const isExpanded = expandedLessons.has(lesson.id)
             return (
-              <button
-                key={lesson.id} 
-                onClick={() => toggleLesson(lesson.id)}
-                className="w-full text-left p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-all"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold shrink-0">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-lg">{lesson.title}</div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-gray-500 text-sm">{lesson.duration}m</span>
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
-                    <div className={`text-sm text-gray-600 mt-1 ${!isExpanded ? 'line-clamp-2' : ''}`}>
-                      {lesson.description}
-                    </div>
-                  </div>
-                </div>
-              </button>
+              <LessonItem
+                key={lesson.id}
+                lesson={lesson}
+                index={index}
+                isExpanded={isExpanded}
+                onToggle={toggleLesson}
+              />
             )
           })}
         </div>
