@@ -8,6 +8,7 @@ import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
 import GeneratingContent from "@/components/GeneratingContent"
+import ErrorBoundary from "@/components/ErrorBoundary"
 
 type Screen = "topic" | "preferences" | "depth" | "generating" | "plan" | "generatingContent" | "player"
 
@@ -259,16 +260,26 @@ export default function Home() {
         />
       )}
       {currentScreen === "player" && (
-        <LessonContent 
-          lessons={lessons}
-          currentLessonIndex={currentLessonIndex}
-          lessonContent={lessonContent}
-          onBack={handleBackFromPlayer}
-          onNext={handleNextLesson}
-          onPrevious={handlePreviousLesson}
-          onSelectLesson={handleSelectLesson}
-          onStartOver={handleStartOver}
-        />
+        <ErrorBoundary
+          resetKeys={[currentLessonIndex, lessonContent]}
+          onError={(error) => {
+            console.error('💥 LessonContent error:', error);
+            if (error.message?.toLowerCase().includes('audio')) {
+              console.log('🎤 Audio generation error detected');
+            }
+          }}
+        >
+          <LessonContent 
+            lessons={lessons}
+            currentLessonIndex={currentLessonIndex}
+            lessonContent={lessonContent}
+            onBack={handleBackFromPlayer}
+            onNext={handleNextLesson}
+            onPrevious={handlePreviousLesson}
+            onSelectLesson={handleSelectLesson}
+            onStartOver={handleStartOver}
+          />
+        </ErrorBoundary>
       )}
     </>
   )
