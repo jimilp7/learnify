@@ -32,6 +32,15 @@ export default function LessonContent({
   onSelectLesson,
   onStartOver
 }: LessonContentProps) {
+  // Performance monitoring in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('LessonContent rendered', { 
+      currentLessonIndex,
+      lessonsCount: lessons.length,
+      hasContent: !!lessonContent 
+    })
+  }
+  
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(true)
   const [audioUrls, setAudioUrls] = useState<string[]>([])

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, memo } from "react"
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, ListMusic } from "lucide-react"
 
 interface AudioPlayerProps {
@@ -17,7 +17,7 @@ interface AudioPlayerProps {
   onSelectLesson?: (index: number) => void
 }
 
-export default function AudioPlayer({
+const AudioPlayer = memo(function AudioPlayer({
   isPlaying,
   onPlayPause,
   onPrevious,
@@ -30,6 +30,16 @@ export default function AudioPlayer({
   currentLessonIndex = 0,
   onSelectLesson
 }: AudioPlayerProps) {
+  // Performance monitoring in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('AudioPlayer rendered', { 
+      isPlaying, 
+      hasAudio, 
+      canGoPrev, 
+      canGoNext,
+      currentLessonIndex 
+    })
+  }
   const [showPlaylist, setShowPlaylist] = useState(false)
   const playlistRef = useRef<HTMLDivElement>(null)
   
@@ -139,4 +149,6 @@ export default function AudioPlayer({
       </div>
     </div>
   )
-}
+})
+
+export default AudioPlayer
