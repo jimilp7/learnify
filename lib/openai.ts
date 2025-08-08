@@ -12,7 +12,14 @@ export interface LessonPlanData {
   duration: number
 }
 
-export async function generateLessonPlan(topic: string, depth: string, preferences?: any): Promise<LessonPlanData[]> {
+export interface LearningPreferences {
+  learningStyle: string
+  pace: string
+  interactivity: string
+  examples: string
+}
+
+export async function generateLessonPlan(topic: string, depth: string, preferences?: LearningPreferences): Promise<LessonPlanData[]> {
   console.log('🤖 OpenAI generateLessonPlan called with:')
   console.log('  - Topic:', topic)
   console.log('  - Depth:', depth)
