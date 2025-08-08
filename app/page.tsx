@@ -8,6 +8,7 @@ import LessonPlan from "@/components/LessonPlan"
 import GeneratingPlan from "@/components/GeneratingPlan"
 import LessonContent from "@/components/LessonContent"
 import GeneratingContent from "@/components/GeneratingContent"
+import ErrorBoundary from "@/components/ErrorBoundary"
 
 type Screen = "topic" | "preferences" | "depth" | "generating" | "plan" | "generatingContent" | "player"
 
@@ -217,7 +218,11 @@ export default function Home() {
   }
 
   return (
-    <>
+    <ErrorBoundary
+      context="application"
+      showGoHome={true}
+      onGoHome={handleStartOver}
+    >
       {currentScreen === "topic" && (
         <TopicSelection onNext={handleTopicNext} />
       )}
@@ -253,23 +258,36 @@ export default function Home() {
         />
       )}
       {currentScreen === "generatingContent" && (
-        <GeneratingContent
-          lessonTitle={lessons[currentLessonIndex]?.title || ""}
-          onBack={handleBackFromGeneratingContent}
-        />
+        <ErrorBoundary 
+          context="lesson content generation"
+          showGoHome={true}
+          onGoHome={handleStartOver}
+        >
+          <GeneratingContent
+            lessonTitle={lessons[currentLessonIndex]?.title || ""}
+            onBack={handleBackFromGeneratingContent}
+          />
+        </ErrorBoundary>
       )}
       {currentScreen === "player" && (
-        <LessonContent 
-          lessons={lessons}
-          currentLessonIndex={currentLessonIndex}
-          lessonContent={lessonContent}
-          onBack={handleBackFromPlayer}
-          onNext={handleNextLesson}
-          onPrevious={handlePreviousLesson}
-          onSelectLesson={handleSelectLesson}
-          onStartOver={handleStartOver}
-        />
+        <ErrorBoundary 
+          context="lesson audio player"
+          showGoHome={true}
+          showRetry={true}
+          onGoHome={handleStartOver}
+        >
+          <LessonContent 
+            lessons={lessons}
+            currentLessonIndex={currentLessonIndex}
+            lessonContent={lessonContent}
+            onBack={handleBackFromPlayer}
+            onNext={handleNextLesson}
+            onPrevious={handlePreviousLesson}
+            onSelectLesson={handleSelectLesson}
+            onStartOver={handleStartOver}
+          />
+        </ErrorBoundary>
       )}
-    </>
+    </ErrorBoundary>
   )
 }

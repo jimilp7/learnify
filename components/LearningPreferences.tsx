@@ -142,6 +142,15 @@ export default function LearningPreferences({ topic, onNext, onBack }: LearningP
 
   const isFormValid = learningStyle && pace && interactivity && examples
 
+  interface Option {
+    value: string
+    label: string
+    emoji: string
+    description: string
+    colorClass: string
+    textColorClass?: string
+  }
+
   const OptionGroup = ({ 
     title, 
     options, 
@@ -149,7 +158,7 @@ export default function LearningPreferences({ topic, onNext, onBack }: LearningP
     onSelect 
   }: {
     title: string
-    options: any[]
+    options: Option[]
     selected: string
     onSelect: (value: string) => void
   }) => (
